@@ -1,3 +1,0 @@
-com.balajifinance.contactfinder
-drawable ic_contact_finder
-style AppTheme

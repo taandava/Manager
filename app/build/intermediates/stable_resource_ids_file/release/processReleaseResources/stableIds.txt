@@ -1,2 +1,0 @@
-com.balajifinance.contactfinder:style/AppTheme = 0x7f020000
-com.balajifinance.contactfinder:drawable/ic_contact_finder = 0x7f010000
