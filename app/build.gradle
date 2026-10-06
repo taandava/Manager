@@ -1,5 +1,13 @@
 plugins { id 'com.android.application' }
 
-android { namespace 'com.balajifinance.contactfinder'; compileSdk 35
-    defaultConfig { applicationId 'com.balajifinance.contactfinder'; minSdk 23; targetSdk 35; versionCode 3; versionName '2.2' }
+android { 
+    namespace 'com.balajifinance.contactfinder'
+    compileSdk 35
+    defaultConfig { 
+        applicationId 'com.balajifinance.contactfinder'
+        minSdk 23
+        targetSdk 35
+        versionCode 4
+        versionName '3.0'
+    }
 }

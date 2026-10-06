@@ -11,7 +11,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "contact_finder.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String TABLE_CONTACTS = "contacts";
     public static final String COL_ID = "id";
@@ -26,6 +26,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_SOURCE = "source";
     public static final String COL_CLOUD_ID = "cloud_id";
     public static final String COL_SYNC_STATUS = "sync_status";
+    public static final String COL_DEVICE_ID = "device_id";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -45,7 +46,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COL_UPDATED_AT + " INTEGER, "
                 + COL_SOURCE + " TEXT, "
                 + COL_CLOUD_ID + " TEXT, "
-                + COL_SYNC_STATUS + " TEXT"
+                + COL_SYNC_STATUS + " TEXT, "
+                + COL_DEVICE_ID + " TEXT"
                 + ")";
         db.execSQL(CREATE_TABLE);
         db.execSQL("CREATE INDEX idx_phone ON " + TABLE_CONTACTS + "(phone)");
@@ -53,12 +55,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE INDEX idx_updated ON " + TABLE_CONTACTS + "(updated_at)");
         db.execSQL("CREATE INDEX idx_deleted ON " + TABLE_CONTACTS + "(deleted)");
         db.execSQL("CREATE INDEX idx_saved ON " + TABLE_CONTACTS + "(saved)");
+        db.execSQL("CREATE INDEX idx_device ON " + TABLE_CONTACTS + "(device_id)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACTS);
-        onCreate(db);
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_CONTACTS + " ADD COLUMN " + COL_DEVICE_ID + " TEXT");
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_device ON " + TABLE_CONTACTS + "(device_id)");
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public synchronized void upsertContact(Contact c) {
@@ -76,6 +84,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_SOURCE, c.source);
         cv.put(COL_CLOUD_ID, c.cloudId);
         cv.put(COL_SYNC_STATUS, c.syncStatus);
+        cv.put(COL_DEVICE_ID, c.deviceId != null ? c.deviceId : "");
         db.insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
@@ -97,6 +106,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 cv.put(COL_SOURCE, c.source);
                 cv.put(COL_CLOUD_ID, c.cloudId);
                 cv.put(COL_SYNC_STATUS, c.syncStatus);
+                cv.put(COL_DEVICE_ID, c.deviceId != null ? c.deviceId : "");
                 db.insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
             }
             db.setTransactionSuccessful();
@@ -167,6 +177,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         c.source = cursor.getString(cursor.getColumnIndexOrThrow(COL_SOURCE));
         c.cloudId = cursor.getString(cursor.getColumnIndexOrThrow(COL_CLOUD_ID));
         c.syncStatus = cursor.getString(cursor.getColumnIndexOrThrow(COL_SYNC_STATUS));
+        int devIdx = cursor.getColumnIndex(COL_DEVICE_ID);
+        if (devIdx >= 0) {
+            c.deviceId = cursor.getString(devIdx);
+        } else {
+            c.deviceId = "";
+        }
         return c;
     }
 

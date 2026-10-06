@@ -27,7 +27,7 @@ public class PhoneUtils {
         if (norm.matches("[0-9]{10}")) {
             return norm.substring(0, 5) + " " + norm.substring(5, 10);
         }
-        return phone;
+        return phone != null ? phone : "";
     }
 
     public static String normalizeSearch(String s) {

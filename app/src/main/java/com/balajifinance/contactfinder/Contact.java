@@ -15,6 +15,7 @@ public class Contact {
     public String source;
     public String cloudId;
     public String syncStatus;
+    public String deviceId;
 
     public Contact() {
         this.id = UUID.randomUUID().toString();
@@ -22,6 +23,7 @@ public class Contact {
         this.updatedAt = this.createdAt;
         this.source = "LOCAL";
         this.syncStatus = "PENDING";
+        this.deviceId = "";
     }
 
     public Contact(String id, String name, String phone, String details) {
@@ -33,6 +35,7 @@ public class Contact {
         this.updatedAt = this.createdAt;
         this.source = "CSV";
         this.syncStatus = "SYNCED";
+        this.deviceId = "";
     }
 
     public String getSearchable() {
