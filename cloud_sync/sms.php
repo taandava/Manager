@@ -1,0 +1,1 @@
+{"ok":true,"message":"SMS sync endpoint active and ready","file_exists":true,"file_size":361211,"last_modified":"2026-10-05 21:00:55"}

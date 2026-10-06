@@ -1,0 +1,8 @@
+com.balajifinance.contactfinder.app-pngs-0 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\generated\res\pngs\debug
+com.balajifinance.contactfinder.app-resValues-1 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\generated\res\resValues\debug
+com.balajifinance.contactfinder.app-updated_navigation_xml-2 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\generated\updated_navigation_xml\debug
+com.balajifinance.contactfinder.app-packageDebugResources-3 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.balajifinance.contactfinder.app-packageDebugResources-4 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.balajifinance.contactfinder.app-debug-5 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.balajifinance.contactfinder.app-debug-6 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\src\debug\res
+com.balajifinance.contactfinder.app-main-7 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\src\main\res

@@ -1,0 +1,8 @@
+com.balajifinance.contactfinder.app-pngs-0 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\generated\res\pngs\release
+com.balajifinance.contactfinder.app-updated_navigation_xml-1 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\generated\updated_navigation_xml\release
+com.balajifinance.contactfinder.app-packageReleaseResources-2 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
+com.balajifinance.contactfinder.app-packageReleaseResources-3 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
+com.balajifinance.contactfinder.app-release-4 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\build\intermediates\merged_res\release\mergeReleaseResources
+com.balajifinance.contactfinder.app-main-5 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\src\main\res
+com.balajifinance.contactfinder.app-release-6 C:\Users\JMD\Downloads\ContactFinderApp_v5\ContactFinderApp\app\src\release\res
+gradleHome-0 C:\Users\JMD\.gradle

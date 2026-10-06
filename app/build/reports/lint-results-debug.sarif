@@ -1,0 +1,632 @@
+{
+    "$schema" : "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+    "version" : "2.1.0",
+    "runs" : [
+        {
+            "tool": {
+                "driver": {
+                    "name": "Android Lint",
+                    "fullName": "Android Lint (in gradle)",
+                    "version": "9.4.1",
+                    "semanticVersion": "9.4.1",
+                    "organization": "Google",
+                    "informationUri": "https://developer.android.com/studio/write/lint",
+                    "fullDescription": {
+                        "text": "Static analysis originally for Android source code but now performing general analysis"
+                    },
+                    "language": "en-US",
+                    "rules": [
+                        {
+                            "id": "AndroidGradlePluginVersion",
+                            "shortDescription": {
+                                "text": "Obsolete Android Gradle Plugin Version"
+                            },
+                            "fullDescription": {
+                                "text": "This detector looks for usage of the Android Gradle Plugin where the version you are using is not the current stable release. Using older versions is fine, and there are cases where you deliberately want to stick with an older version. However, you may simply not be aware that a more recent version is available, and that is what this lint check helps find."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 70
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Correctness"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "DefaultLocale",
+                            "shortDescription": {
+                                "text": "Implied default locale in case conversion"
+                            },
+                            "fullDescription": {
+                                "text": "Calling String#toLowerCase() or #toUpperCase() without specifying an explicit locale is a common source of bugs. The reason for that is that those methods will use the current locale on the user's device, and even though the code appears to work correctly when you are developing the app, it will fail in some locales. For example, in the Turkish locale, the uppercase replacement for i is not I.\n\nIf you want the methods to just perform ASCII replacement, for example to convert an enum name, call String#toUpperCase(Locale.ROOT) instead. If you really want to use the current locale, call String#toUpperCase(Locale.getDefault()) instead.",
+                                "markdown": "Calling `String#toLowerCase()` or `#toUpperCase()` **without specifying an explicit locale** is a common source of bugs. The reason for that is that those methods will use the current locale on the user's device, and even though the code appears to work correctly when you are developing the app, it will fail in some locales. For example, in the Turkish locale, the uppercase replacement for `i` is **not** `I`.\n\nIf you want the methods to just perform ASCII replacement, for example to convert an enum name, call `String#toUpperCase(Locale.ROOT)` instead. If you really want to use the current locale, call `String#toUpperCase(Locale.getDefault())` instead."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 50
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Correctness"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "DiscouragedApi",
+                            "shortDescription": {
+                                "text": "Using discouraged APIs"
+                            },
+                            "fullDescription": {
+                                "text": "Discouraged APIs are allowed and are not deprecated, but they may be unfit for common use (e.g. due to slow performance or subtle behavior)."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 90
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Correctness"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "GradleDependency",
+                            "shortDescription": {
+                                "text": "Obsolete Gradle Dependency"
+                            },
+                            "fullDescription": {
+                                "text": "This detector looks for usages of libraries where the version you are using is not the current stable release. Using older versions is fine, and there are cases where you deliberately want to stick with an older version. However, you may simply not be aware that a more recent version is available, and that is what this lint check helps find."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 70
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Correctness"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "LockedOrientationActivity",
+                            "shortDescription": {
+                                "text": "Incompatible screenOrientation value"
+                            },
+                            "fullDescription": {
+                                "text": "The <activity> element should not be locked to any orientation so that users can take advantage of the multi-window environments and larger screens available on Android. To fix the issue, consider declaring the corresponding activity element with `screenOrientation=\"unspecified\"`or fullSensor attribute.",
+                                "markdown": "The `<activity>` element should not be locked to any orientation so that users can take advantage of the multi-window environments and larger screens available on Android. To fix the issue, consider declaring the corresponding activity element with `screenOrientation=\"unspecified\"`or `fullSensor` attribute."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 70
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Correctness"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "OldTargetApi",
+                            "shortDescription": {
+                                "text": "Target SDK attribute is not targeting latest version"
+                            },
+                            "fullDescription": {
+                                "text": "When your application or sdk runs on a version of Android that is more recent than your targetSdk specifies that it has been tested with, various compatibility modes kick in. This ensures that your application continues to work, but it may look out of place. For example, if the targetSdk is less than 14, your app may get an option button in the UI.\n\nTo fix this issue, set the targetSdk to the highest available value. Then test your app to make sure everything works correctly. You may want to consult the compatibility notes to see what changes apply to each version you are adding support for: https://developer.android.com/reference/android/os/Build.VERSION_CODES.html as well as follow this guide:\nhttps://developer.android.com/distribute/best-practices/develop/target-sdk.html",
+                                "markdown": "When your application or sdk runs on a version of Android that is more recent than your `targetSdk` specifies that it has been tested with, various compatibility modes kick in. This ensures that your application continues to work, but it may look out of place. For example, if the `targetSdk` is less than 14, your app may get an option button in the UI.\n\nTo fix this issue, set the `targetSdk` to the highest available value. Then test your app to make sure everything works correctly. You may want to consult the compatibility notes to see what changes apply to each version you are adding support for: https://developer.android.com/reference/android/os/Build.VERSION_CODES.html as well as follow this guide:\nhttps://developer.android.com/distribute/best-practices/develop/target-sdk.html"
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 50
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Correctness"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "SetTextI18n",
+                            "shortDescription": {
+                                "text": "TextView Internationalization"
+                            },
+                            "fullDescription": {
+                                "text": "When calling TextView#setText\n* Never call Number#toString() to format numbers; it will not handle fraction separators and locale-specific digits properly. Consider using String#format with proper format specifications (%d or %f) instead.\n* Do not pass a string literal (e.g. \"Hello\") to display text. Hardcoded text can not be properly translated to other languages. Consider using Android resource strings instead.\n* Do not build messages by concatenating text chunks. Such messages can not be properly translated.",
+                                "markdown": "When calling `TextView#setText`\n* Never call `Number#toString()` to format numbers; it will not handle fraction separators and locale-specific digits properly. Consider using `String#format` with proper format specifications (`%d` or `%f`) instead.\n* Do not pass a string literal (e.g. \"Hello\") to display text. Hardcoded text can not be properly translated to other languages. Consider using Android resource strings instead.\n* Do not build messages by concatenating text chunks. Such messages can not be properly translated."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning",
+                                "rank": 50
+                            },
+                            "properties": {
+                                "tags": [
+                                    "Internationalization"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "originalUriBaseIds": {
+                "%SRCROOT%": {
+                    "uri": "file:///C:/Users/JMD/Downloads/ContactFinderApp_v5/ContactFinderApp/"
+                }
+            },
+            "results": [
+                {
+                    "ruleId": "DefaultLocale",
+                    "ruleIndex": 1,
+                    "message": {
+                        "text": "Implicitly using the default locale is a common source of bugs: Use toLowerCase(Locale) instead. For strings meant to be internal use Locale.ROOT, otherwise Locale.getDefault().",
+                        "markdown": "Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/src/main/java/com/balajifinance/contactfinder/MainActivity.java"
+                                },
+                                "region": {
+                                    "startLine": 758,
+                                    "startColumn": 35,
+                                    "endLine": 758,
+                                    "endColumn": 46,
+                                    "charOffset": 32702,
+                                    "charLength": 11,
+                                    "snippet": {
+                                        "text": "toLowerCase"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 756,
+                                    "endLine": 761,
+                                    "snippet": {
+                                        "text": "        InputStream is = code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream();\n        String s = is == null ? \"\" : read(new InputStreamReader(is, StandardCharsets.UTF_8));\n        String trimmed = s.trim().toLowerCase();\n        if (trimmed.startsWith(\"<!doctype\") || trimmed.startsWith(\"<html\")) {\n            throw new IOException(\"Server returned HTML error page. Check your URL path.\");\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "19c7209fe856302f"
+                    }
+                },
+                {
+                    "ruleId": "DefaultLocale",
+                    "ruleIndex": 1,
+                    "message": {
+                        "text": "Implicitly using the default locale is a common source of bugs: Use toLowerCase(Locale) instead. For strings meant to be internal use Locale.ROOT, otherwise Locale.getDefault().",
+                        "markdown": "Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/src/main/java/com/balajifinance/contactfinder/MainActivity.java"
+                                },
+                                "region": {
+                                    "startLine": 774,
+                                    "startColumn": 35,
+                                    "endLine": 774,
+                                    "endColumn": 46,
+                                    "charOffset": 33577,
+                                    "charLength": 11,
+                                    "snippet": {
+                                        "text": "toLowerCase"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 772,
+                                    "endLine": 777,
+                                    "snippet": {
+                                        "text": "        InputStream is = code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream();\n        String s = is == null ? \"\" : read(new InputStreamReader(is, StandardCharsets.UTF_8));\n        String trimmed = s.trim().toLowerCase();\n        if (trimmed.startsWith(\"<!doctype\") || trimmed.startsWith(\"<html\")) {\n            throw new IOException(\"Server returned HTML error page. Check your URL path.\");\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "19c7209fe856302f"
+                    }
+                },
+                {
+                    "ruleId": "DefaultLocale",
+                    "ruleIndex": 1,
+                    "message": {
+                        "text": "Implicitly using the default locale is a common source of bugs: Use toLowerCase(Locale) instead. For strings meant to be internal use Locale.ROOT, otherwise Locale.getDefault().",
+                        "markdown": "Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/src/main/java/com/balajifinance/contactfinder/MainActivity.java"
+                                },
+                                "region": {
+                                    "startLine": 1213,
+                                    "startColumn": 51,
+                                    "endLine": 1213,
+                                    "endColumn": 62,
+                                    "charOffset": 53843,
+                                    "charLength": 11,
+                                    "snippet": {
+                                        "text": "toLowerCase"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 1211,
+                                    "endLine": 1216,
+                                    "snippet": {
+                                        "text": "                        InputStream is = code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream();\n                        String s = is == null ? \"\" : read(new InputStreamReader(is, StandardCharsets.UTF_8));\n                        String trimmed = s.trim().toLowerCase();\n                        if (trimmed.startsWith(\"<!doctype\") || trimmed.startsWith(\"<html\")) {\n                            throw new IOException(\"Server returned HTML error page. Check your URL path.\");\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "e02407f0cd766d98"
+                    }
+                },
+                {
+                    "ruleId": "OldTargetApi",
+                    "ruleIndex": 5,
+                    "message": {
+                        "text": "Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details.",
+                        "markdown": "Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/build.gradle"
+                                },
+                                "region": {
+                                    "startLine": 4,
+                                    "startColumn": 81,
+                                    "endLine": 4,
+                                    "endColumn": 93,
+                                    "charOffset": 191,
+                                    "charLength": 12,
+                                    "snippet": {
+                                        "text": "targetSdk 35"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 2,
+                                    "endLine": 6,
+                                    "snippet": {
+                                        "text": "\nandroid { namespace 'com.balajifinance.contactfinder'; compileSdk 35\n    defaultConfig { applicationId 'com.balajifinance.contactfinder'; minSdk 23; targetSdk 35; versionCode 3; versionName '2.2' }\n}\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "fixes": [
+                        {
+                            "description": {
+                                "text": "Update targetSdkVersion to 37"
+                            },
+                            "artifactChanges": [
+                                {
+                                    "artifactLocation": {
+                                        "uriBaseId": "%SRCROOT%",
+                                        "uri": "app/build.gradle"
+                                    },
+                                    "replacements": [
+                                        {
+                                            "deletedRegion": {
+                                                "startLine": 4,
+                                                "startColumn": 91,
+                                                "charOffset": 201,
+                                                "endLine": 4,
+                                                "endColumn": 93,
+                                                "charLength": 2
+                                            },
+                                            "insertedContent": {
+                                                "text": "37\n"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "bdf6798c91557d4d"
+                    }
+                },
+                {
+                    "ruleId": "AndroidGradlePluginVersion",
+                    "ruleIndex": 0,
+                    "message": {
+                        "text": "A newer version of Gradle than 9.7.1 is available: 9.8.0"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "gradle/wrapper/gradle-wrapper.properties"
+                                },
+                                "region": {
+                                    "startLine": 4,
+                                    "startColumn": 17,
+                                    "endLine": 4,
+                                    "endColumn": 80,
+                                    "charOffset": 111,
+                                    "charLength": 63,
+                                    "snippet": {
+                                        "text": "https\\://services.gradle.org/distributions/gradle-9.7.1-bin.zip"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 2,
+                                    "endLine": 7,
+                                    "snippet": {
+                                        "text": "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-9.7.1-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "fixes": [
+                        {
+                            "description": {
+                                "text": "Update to 9.8.0"
+                            },
+                            "artifactChanges": [
+                                {
+                                    "artifactLocation": {
+                                        "uriBaseId": "%SRCROOT%",
+                                        "uri": "gradle/wrapper/gradle-wrapper.properties"
+                                    },
+                                    "replacements": [
+                                        {
+                                            "deletedRegion": {
+                                                "startLine": 4,
+                                                "startColumn": 67,
+                                                "charOffset": 161,
+                                                "endLine": 4,
+                                                "endColumn": 72,
+                                                "charLength": 5
+                                            },
+                                            "insertedContent": {
+                                                "text": "9.8.0\n"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "96335de69c5d0603"
+                    }
+                },
+                {
+                    "ruleId": "GradleDependency",
+                    "ruleIndex": 3,
+                    "message": {
+                        "text": "A newer version of compileSdk than 35 is available: 37",
+                        "markdown": "A newer version of `compileSdk` than 35 is available: 37"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/build.gradle"
+                                },
+                                "region": {
+                                    "startLine": 3,
+                                    "startColumn": 56,
+                                    "endLine": 3,
+                                    "endColumn": 69,
+                                    "charOffset": 97,
+                                    "charLength": 13,
+                                    "snippet": {
+                                        "text": "compileSdk 35"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 1,
+                                    "endLine": 6,
+                                    "snippet": {
+                                        "text": "plugins { id 'com.android.application' }\n\nandroid { namespace 'com.balajifinance.contactfinder'; compileSdk 35\n    defaultConfig { applicationId 'com.balajifinance.contactfinder'; minSdk 23; targetSdk 35; versionCode 3; versionName '2.2' }\n}\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "fixes": [
+                        {
+                            "description": {
+                                "text": "Set compileSdk to 37"
+                            },
+                            "artifactChanges": [
+                                {
+                                    "artifactLocation": {
+                                        "uriBaseId": "%SRCROOT%",
+                                        "uri": "app/build.gradle"
+                                    },
+                                    "replacements": [
+                                        {
+                                            "deletedRegion": {
+                                                "startLine": 3,
+                                                "startColumn": 67,
+                                                "charOffset": 108,
+                                                "endLine": 3,
+                                                "endColumn": 69,
+                                                "charLength": 2
+                                            },
+                                            "insertedContent": {
+                                                "text": "37\n"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "24f7ca6331f2dce0"
+                    }
+                },
+                {
+                    "ruleId": "LockedOrientationActivity",
+                    "ruleIndex": 4,
+                    "message": {
+                        "text": "Expecting android:screenOrientation=\"unspecified\" or \"fullSensor\" for this activity so the user can use the application in any orientation and provide a great experience on Chrome OS devices",
+                        "markdown": "Expecting `android:screenOrientation=\"unspecified\"` or `\"fullSensor\"` for this activity so the user can use the application in any orientation and provide a great experience on Chrome OS devices"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/src/main/AndroidManifest.xml"
+                                },
+                                "region": {
+                                    "startLine": 5,
+                                    "startColumn": 48,
+                                    "endLine": 5,
+                                    "endColumn": 84,
+                                    "charOffset": 482,
+                                    "charLength": 36,
+                                    "snippet": {
+                                        "text": "android:screenOrientation=\"portrait\""
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 3,
+                                    "endLine": 8,
+                                    "snippet": {
+                                        "text": "    <uses-permission android:name=\"android.permission.READ_CONTACTS\" />\n    <application android:theme=\"@style/AppTheme\" android:label=\"Contact Finder\" android:icon=\"@drawable/ic_contact_finder\" android:roundIcon=\"@drawable/ic_contact_finder\" android:allowBackup=\"true\" android:supportsRtl=\"true\">\n        <activity android:name=\".MainActivity\" android:screenOrientation=\"portrait\" android:exported=\"true\">\n            <intent-filter>\n                <action android:name=\"android.intent.action.MAIN\" />\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "fixes": [
+                        {
+                            "description": {
+                                "text": "Set screenOrientation=\"fullSensor\""
+                            },
+                            "artifactChanges": [
+                                {
+                                    "artifactLocation": {
+                                        "uriBaseId": "%SRCROOT%",
+                                        "uri": "app/src/main/AndroidManifest.xml"
+                                    },
+                                    "replacements": [
+                                        {
+                                            "deletedRegion": {
+                                                "startLine": 5,
+                                                "startColumn": 48,
+                                                "charOffset": 482,
+                                                "endLine": 5,
+                                                "endColumn": 84,
+                                                "charLength": 36
+                                            },
+                                            "insertedContent": {
+                                                "text": "android:screenOrientation=\"fullSensor\"\n"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "2dc9a083d03f09c1"
+                    }
+                },
+                {
+                    "ruleId": "DiscouragedApi",
+                    "ruleIndex": 2,
+                    "message": {
+                        "text": "Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/src/main/AndroidManifest.xml"
+                                },
+                                "region": {
+                                    "startLine": 5,
+                                    "startColumn": 48,
+                                    "endLine": 5,
+                                    "endColumn": 84,
+                                    "charOffset": 482,
+                                    "charLength": 36,
+                                    "snippet": {
+                                        "text": "android:screenOrientation=\"portrait\""
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 3,
+                                    "endLine": 8,
+                                    "snippet": {
+                                        "text": "    <uses-permission android:name=\"android.permission.READ_CONTACTS\" />\n    <application android:theme=\"@style/AppTheme\" android:label=\"Contact Finder\" android:icon=\"@drawable/ic_contact_finder\" android:roundIcon=\"@drawable/ic_contact_finder\" android:allowBackup=\"true\" android:supportsRtl=\"true\">\n        <activity android:name=\".MainActivity\" android:screenOrientation=\"portrait\" android:exported=\"true\">\n            <intent-filter>\n                <action android:name=\"android.intent.action.MAIN\" />\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "fixes": [
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "2dc9a083d03f09c1"
+                    }
+                },
+                {
+                    "ruleId": "SetTextI18n",
+                    "ruleIndex": 6,
+                    "message": {
+                        "text": "String literal in setText can not be translated. Use Android resources instead.",
+                        "markdown": "String literal in `setText` can not be translated. Use Android resources instead."
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uriBaseId": "%SRCROOT%",
+                                    "uri": "app/src/main/java/com/balajifinance/contactfinder/MainActivity.java"
+                                },
+                                "region": {
+                                    "startLine": 269,
+                                    "startColumn": 36,
+                                    "endLine": 269,
+                                    "endColumn": 44,
+                                    "charOffset": 11699,
+                                    "charLength": 8,
+                                    "snippet": {
+                                        "text": "\"Delete\""
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 267,
+                                    "endLine": 272,
+                                    "snippet": {
+                                        "text": "\n                    Button delBtn = new Button(this);\n                    delBtn.setText(\"Delete\");\n                    delBtn.setTextSize(14);\n                    delBtn.setTextColor(Color.rgb(255, 59, 48)); // iOS Red\n"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "sourceContext/v1": "7827e3749f449b80"
+                    }
+                }
+            ]
+        }
+    ]
+}
