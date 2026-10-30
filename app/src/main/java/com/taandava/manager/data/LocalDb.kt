@@ -1,3 +1,5 @@
+@file:Suppress("DestructuringDeclaration")
+
 package com.taandava.manager.data
 
 import android.content.ContentValues
@@ -1046,7 +1048,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     put(COL_S_SENDER_TYPE, item.senderType)
                     if (item.extractedOtp != null) put(COL_S_OTP, item.extractedOtp)
                     if (item.extractedAmount != null) put(COL_S_AMOUNT, item.extractedAmount)
-                    if (item.isDebit != null) put(COL_S_IS_DEBIT, if (item.isDebit == true) 1 else 0)
+                    if (item.isDebit != null) put(COL_S_IS_DEBIT, if (item.isDebit) 1 else 0)
                     if (item.syncedAt != null) put(COL_S_SYNCED_AT, item.syncedAt)
                 }
                 val rowId = db.insertWithOnConflict(TABLE_SMS, null, cv, SQLiteDatabase.CONFLICT_IGNORE)

@@ -49,6 +49,7 @@ function normalizePhone($phone) {
  */
 function isSmsHeaderOrSyntheticContact($name, $phone = '', $details = '') {
     $tName = trim((string)$name);
+    if (empty($tName)) return false;
     // TRAI format: 2 alpha chars, hyphen, alphanumeric code, optional sub-code
     if (preg_match('/^[A-Za-z]{2}-[A-Za-z0-9]{3,14}(?:-[A-Za-z0-9]+)?$/', $tName)) {
         return true;
@@ -64,15 +65,6 @@ function isSmsHeaderOrSyntheticContact($name, $phone = '', $details = '') {
             stripos($tDetails, 'SMS_SCAN') !== false ||
             stripos($tDetails, 'SMS Body') !== false ||
             stripos($tDetails, 'source:SMS') !== false) {
-            return true;
-        }
-    }
-    // Pure digits check: If name has no letters and name != phone
-    $hasLetters = preg_match('/[a-zA-Z]/', $tName);
-    if (!$hasLetters) {
-        $pNorm = normalizePhone($phone);
-        $nNorm = normalizePhone($tName);
-        if (empty($pNorm) || empty($nNorm) || $pNorm !== $nNorm) {
             return true;
         }
     }
@@ -437,21 +429,21 @@ if ($isApiRequest) {
 
             $sql = "SELECT id, name, phone, details, saved, updated_at, deleted, device_id 
                     FROM contacts WHERE {$whereSql} 
-                    ORDER BY saved DESC, name COLLATE NOCASE ASC 
+                    ORDER BY saved DESC, (CASE WHEN name IS NULL OR TRIM(name) = '' THEN 1 ELSE 0 END) ASC, name COLLATE NOCASE ASC 
                     LIMIT {$limit} OFFSET {$offset}";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $all = $stmt->fetchAll();
 
             foreach ($all as $r) {
-                $cName = strval($r['name']);
+                $cName = trim(strval($r['name']));
                 $cPhone = normalizePhone($r['phone']);
                 $cDetails = strval($r['details']);
-                if (isSmsHeaderOrSyntheticContact($cName, $cPhone, $cDetails)) continue;
+                $displayName = !empty($cName) ? $cName : ($cPhone ?: "Contact");
 
                 $rows[] = [
                     'id'         => strval($r['id']),
-                    'name'       => $cName,
+                    'name'       => $displayName,
                     'phone'      => $cPhone,
                     'details'    => $cDetails,
                     'saved'      => (bool)$r['saved'],
@@ -463,17 +455,20 @@ if ($isApiRequest) {
         } else {
             $allRows = readCsvRows($targetCsv);
             foreach ($allRows as $r) {
-                if (isSmsHeaderOrSyntheticContact($r['name'], $r['phone'], $r['details'])) continue;
                 if (!empty($q)) {
                     $haystack = strtolower($r['name'].' '.$r['phone'].' '.$r['details'].' '.$r['device_id']);
                     if (strpos($haystack, strtolower($q)) === false) continue;
                 }
                 if ($saved !== null && $saved == 1 && $r['saved'] !== '1') continue;
 
+                $cName = trim(strval($r['name']));
+                $cPhone = normalizePhone($r['phone']);
+                $displayName = !empty($cName) ? $cName : ($cPhone ?: "Contact");
+
                 $rows[] = [
                     'id'         => $r['id'],
-                    'name'       => $r['name'],
-                    'phone'      => $r['phone'],
+                    'name'       => $displayName,
+                    'phone'      => $cPhone,
                     'details'    => $r['details'],
                     'saved'      => ($r['saved'] === '1' || $r['saved'] === true),
                     'updated_at' => intval($r['updated_at']),
