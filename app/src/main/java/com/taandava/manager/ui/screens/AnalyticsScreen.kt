@@ -44,7 +44,7 @@ fun AnalyticsScreen(vm: MainViewModel) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Image(
-                painter = painterResource(R.drawable.ic_launcher_flat),
+                painter = painterResource(R.drawable.app_logo),
                 contentDescription = "Manager Logo",
                 modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
             )
@@ -116,7 +116,7 @@ fun AnalyticsScreen(vm: MainViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_flat),
+                    painter = painterResource(id = R.drawable.app_logo),
                     contentDescription = "Manager Logo",
                     modifier = Modifier.size(48.dp).clip(RoundedCornerShape(10.dp))
                 )

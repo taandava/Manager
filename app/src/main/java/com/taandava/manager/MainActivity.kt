@@ -185,7 +185,7 @@ fun ManagerApp(vm: MainViewModel = viewModel()) {
                             title = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Image(
-                                        painter = painterResource(id = R.drawable.ic_launcher_flat),
+                                        painter = painterResource(id = R.drawable.app_logo),
                                         contentDescription = "Manager Icon",
                                         modifier = Modifier
                                             .size(34.dp)

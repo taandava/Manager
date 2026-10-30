@@ -25,7 +25,7 @@ $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 ```powershell
 .\gradlew.bat test
 ```
-*(All 61 tests across 9 test suites must pass.)*
+*(All 63 tests across 9 test suites must pass.)*
 
 ### Build Signed Release APK:
 ```powershell
