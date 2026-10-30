@@ -2,7 +2,6 @@
 
 package com.taandava.manager.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,13 +13,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.taandava.manager.R
+import com.taandava.manager.ui.components.ManagerLogo
 import com.taandava.manager.ui.*
 
 @Composable
@@ -45,11 +42,7 @@ fun AnalyticsScreen(vm: MainViewModel) {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Image(
-                painter = painterResource(R.drawable.app_logo),
-                contentDescription = "Manager Logo",
-                modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
-            )
+            ManagerLogo(size = 32.dp)
             Text("📊 Database Analytics & Storage", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
         }
 
@@ -117,11 +110,7 @@ fun AnalyticsScreen(vm: MainViewModel) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.app_logo),
-                    contentDescription = "Manager Logo",
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(10.dp))
-                )
+                ManagerLogo(size = 48.dp, shape = RoundedCornerShape(10.dp))
                 Column {
                     Text("MANAGER", fontWeight = FontWeight.Black, color = TextPrimary, letterSpacing = 1.sp)
                     Text("Version 4.0 • Jetpack Compose Native", fontSize = 11.sp, color = GlassCyan)

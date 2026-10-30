@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.taandava.manager.ui.*
+import com.taandava.manager.ui.components.ManagerLogo
 import com.taandava.manager.ui.components.WhatsAppChooserDialog
 import com.taandava.manager.ui.screens.*
 import androidx.activity.viewModels
@@ -186,13 +186,7 @@ fun ManagerApp(vm: MainViewModel = viewModel()) {
                         TopAppBar(
                             title = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.app_logo),
-                                        contentDescription = "Manager Icon",
-                                        modifier = Modifier
-                                            .size(34.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                    )
+                                    ManagerLogo(size = 34.dp)
                                     Spacer(Modifier.width(10.dp))
                                     Column {
                                         Text(
