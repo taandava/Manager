@@ -429,7 +429,14 @@ if ($isApiRequest) {
 
             $sql = "SELECT id, name, phone, details, saved, updated_at, deleted, device_id 
                     FROM contacts WHERE {$whereSql} 
-                    ORDER BY saved DESC, (CASE WHEN name IS NULL OR TRIM(name) = '' THEN 1 ELSE 0 END) ASC, name COLLATE NOCASE ASC 
+                    ORDER BY 
+                        saved DESC,
+                        (CASE 
+                            WHEN name IS NULL OR TRIM(name) = '' THEN 3
+                            WHEN substr(trim(name), 1, 1) IN ('+','0','1','2','3','4','5','6','7','8','9','-','_','.','*','#','(',')') THEN 2
+                            ELSE 1
+                        END) ASC,
+                        name COLLATE NOCASE ASC 
                     LIMIT {$limit} OFFSET {$offset}";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -476,6 +483,18 @@ if ($isApiRequest) {
                     'device_id'  => $r['device_id'],
                 ];
             }
+            usort($rows, function($a, $b) {
+                if ($a['saved'] !== $b['saved']) return $b['saved'] ? -1 : 1;
+                $nameA = trim((string)$a['name']);
+                $nameB = trim((string)$b['name']);
+                $firstCharA = $nameA !== '' ? $nameA[0] : '';
+                $firstCharB = $nameB !== '' ? $nameB[0] : '';
+                $syms = ['+','0','1','2','3','4','5','6','7','8','9','-','_','.','*','#','(',')'];
+                $typeA = ($nameA === '') ? 3 : (in_array($firstCharA, $syms, true) ? 2 : 1);
+                $typeB = ($nameB === '') ? 3 : (in_array($firstCharB, $syms, true) ? 2 : 1);
+                if ($typeA !== $typeB) return $typeA - $typeB;
+                return strcasecmp($nameA, $nameB);
+            });
             $total = count($rows);
             $rows = array_slice($rows, $offset, $limit);
         }
