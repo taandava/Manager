@@ -1,13 +1,106 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
 
-android { 
-    namespace 'com.balajifinance.contactfinder'
-    compileSdk 35
-    defaultConfig { 
-        applicationId 'com.balajifinance.contactfinder'
-        minSdk 23
-        targetSdk 35
-        versionCode 4
-        versionName '3.0'
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace 'com.taandava.manager'
+    compileSdk 37
+
+    defaultConfig {
+        applicationId 'com.taandava.manager'
+        minSdk 24
+        targetSdk 37
+        versionCode 6
+        versionName '4.0-manager'
+    }
+
+    signingConfigs {
+        release {
+            def ksFile = keystoreProperties.getProperty('storeFile', 'release.keystore')
+            storeFile file(ksFile)
+            storePassword keystoreProperties.getProperty('storePassword', 'contactfinder')
+            keyAlias keystoreProperties.getProperty('keyAlias', 'contactfinder')
+            keyPassword keystoreProperties.getProperty('keyPassword', 'contactfinder')
+            v1SigningEnabled true
+            v2SigningEnabled true
+            enableV3Signing = true
+            enableV4Signing = false
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+
+    packaging {
+        resources.excludes += [
+            "META-INF/AL2.0",
+            "META-INF/LGPL2.1",
+            "META-INF/LICENSE*",
+            "META-INF/NOTICE*",
+            "META-INF/*.kotlin_module"
+        ]
+    }
+}
+
+dependencies {
+    def composeBom = platform("androidx.compose:compose-bom:2026.09.00")
+    implementation composeBom
+    androidTestImplementation composeBom
+
+    implementation "androidx.activity:activity-compose:1.13.0"
+    implementation "androidx.core:core-ktx:1.19.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.11.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0"
+    implementation "com.squareup.okhttp3:okhttp:5.5.1"
+
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation "androidx.compose.material3:material3"
+    implementation "androidx.compose.material:material-icons-extended"
+
+    debugImplementation "androidx.compose.ui:ui-tooling"
+    testImplementation "junit:junit:4.13.2"
+}
+
+tasks.register('copyReleaseApk', Copy) {
+    from layout.buildDirectory.dir("outputs/apk/release")
+    include "app-release.apk"
+    into "${rootDir}/release"
+    rename "app-release.apk", "app-manager-v4.0.apk"
+    dependsOn 'assembleRelease'
+    doLast {
+        copy {
+            from layout.buildDirectory.dir("outputs/apk/release")
+            include "app-release.apk"
+            into "${projectDir}/release"
+            rename "app-release.apk", "app-manager-v4.0.apk"
+        }
     }
 }

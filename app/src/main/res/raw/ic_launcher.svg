@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="50%" stop-color="#090D16" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.6" />
+      <stop offset="50%" stop-color="#34D399" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.1" />
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="mintGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="4" />
+
+  <!-- Ambient Internal Glow Behind Logo -->
+  <circle cx="256" cy="256" r="140" fill="url(#glowGrad)" />
+
+  <!-- Geometric Hexagon Shield Accent -->
+  <polygon points="256,90 380,160 380,330 256,410 132,330 132,160" fill="none" stroke="#38BDF8" stroke-opacity="0.2" stroke-width="2.5" stroke-dasharray="6,6" />
+
+  <!-- Futuristic Monogram M -->
+  <!-- Left Outer Pillar -->
+  <path d="M 148 370 L 148 165 C 148 152 158 142 171 142 L 189 142 C 202 142 212 152 212 165 L 212 370 C 212 377 206 382 199 382 L 161 382 C 154 382 148 377 148 370 Z" fill="url(#cyanGrad)" />
+
+  <!-- Right Outer Pillar -->
+  <path d="M 300 370 L 300 165 C 300 152 310 142 323 142 L 341 142 C 354 142 364 152 364 165 L 364 370 C 364 377 358 382 351 382 L 313 382 C 306 382 300 377 300 370 Z" fill="url(#cyanGrad)" />
+
+  <!-- Center Chevron Nexus -->
+  <path d="M 206 180 L 256 270 L 306 180 L 326 195 L 268 300 C 262 310 250 310 244 300 L 186 195 Z" fill="url(#mintGrad)" />
+
+  <!-- Central Nexus Crystal Node -->
+  <polygon points="256,170 274,196 256,222 238,196" fill="#38BDF8" />
+  <circle cx="256" cy="196" r="4" fill="#FFFFFF" />
+
+  <!-- Horizontal Tech Connectors and Satellite Nodes -->
+  <line x1="116" y1="256" x2="148" y2="256" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+  <circle cx="116" cy="256" r="5" fill="#34D399" />
+
+  <line x1="364" y1="256" x2="396" y2="256" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+  <circle cx="396" cy="256" r="5" fill="#34D399" />
+</svg>

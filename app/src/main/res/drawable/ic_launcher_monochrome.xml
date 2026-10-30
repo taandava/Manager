@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Monochrome Manager Monogram for Material You Themed Icons & Notifications -->
+    <!-- Left Outer Pillar -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38.8,70 L38.8,41.2 C38.8,39.4 40.2,38 42,38 L44.6,38 C46.4,38 47.8,39.4 47.8,41.2 L47.8,70 C47.8,71 47,71.7 46,71.7 L40.6,71.7 C39.6,71.7 38.8,71 38.8,70 Z" />
+
+    <!-- Right Outer Pillar -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M60.2,70 L60.2,41.2 C60.2,39.4 61.6,38 63.4,38 L66,38 C67.8,38 69.2,39.4 69.2,41.2 L69.2,70 C69.2,71 68.4,71.7 67.4,71.7 L62,71.7 C61,71.7 60.2,71 60.2,70 Z" />
+
+    <!-- Center Chevron Nexus -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M47,43.3 L54,56 L61,43.3 L63.8,45.4 L55.7,60.2 C54.9,61.6 53.1,61.6 52.3,60.2 L44.2,45.4 Z" />
+
+    <!-- Central Nexus Crystal Node -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,41.9 L56.5,45.6 L54,49.2 L51.5,45.6 Z" />
+</vector>

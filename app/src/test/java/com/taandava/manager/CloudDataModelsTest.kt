@@ -1,0 +1,92 @@
+package com.taandava.manager
+
+import com.taandava.manager.data.CloudContactItem
+import com.taandava.manager.data.CloudOverview
+import com.taandava.manager.data.CloudSmsItem
+import org.junit.Assert.*
+import org.junit.Test
+
+class CloudDataModelsTest {
+
+    @Test
+    fun testCloudOverviewDefaults() {
+        val overview = CloudOverview()
+        assertEquals(0, overview.totalContacts)
+        assertEquals(0, overview.totalSms)
+        assertEquals(0, overview.uniquePhones)
+        assertTrue(overview.devices.isEmpty())
+        assertEquals(0L, overview.dbSizeBytes)
+        assertEquals(0L, overview.lastUpdated)
+    }
+
+    @Test
+    fun testCloudOverviewCreation() {
+        val overview = CloudOverview(
+            totalContacts = 1250,
+            totalSms = 4800,
+            uniquePhones = 1100,
+            devices = listOf("SM-G935F", "WEB_ADMIN"),
+            dbSizeBytes = 2450000L,
+            lastUpdated = 1729000000000L
+        )
+
+        assertEquals(1250, overview.totalContacts)
+        assertEquals(4800, overview.totalSms)
+        assertEquals(1100, overview.uniquePhones)
+        assertEquals(2, overview.devices.size)
+        assertEquals("SM-G935F", overview.devices[0])
+        assertEquals("WEB_ADMIN", overview.devices[1])
+        assertEquals(2450000L, overview.dbSizeBytes)
+        assertEquals(1729000000000L, overview.lastUpdated)
+    }
+
+    @Test
+    fun testCloudContactItemProperties() {
+        val contact = CloudContactItem(
+            id = "c123",
+            name = "Ramesh Kumar",
+            phone = "+919876543210",
+            details = "Loan: ₹50,000",
+            saved = true,
+            updatedAt = 1729000000000L,
+            deviceId = "SM-G935F"
+        )
+
+        assertEquals("c123", contact.id)
+        assertEquals("Ramesh Kumar", contact.name)
+        assertEquals("+919876543210", contact.phone)
+        assertEquals("Loan: ₹50,000", contact.details)
+        assertTrue(contact.saved)
+        assertEquals(1729000000000L, contact.updatedAt)
+        assertEquals("SM-G935F", contact.deviceId)
+
+        val copied = contact.copy(name = "Suresh Kumar", saved = false)
+        assertEquals("Suresh Kumar", copied.name)
+        assertFalse(copied.saved)
+        assertEquals("c123", copied.id)
+    }
+
+    @Test
+    fun testCloudSmsItemProperties() {
+        val sms = CloudSmsItem(
+            id = "s999",
+            address = "VK-HDFCBK",
+            normalizedNumber = "VK-HDFCBK",
+            body = "Rs 2500 debited from a/c **1234 on 30-Oct-26. UPI Ref: 123456",
+            date = 1729000000000L,
+            type = "INBOX",
+            deviceId = "SM-G935F"
+        )
+
+        assertEquals("s999", sms.id)
+        assertEquals("VK-HDFCBK", sms.address)
+        assertEquals("VK-HDFCBK", sms.normalizedNumber)
+        assertTrue(sms.body.contains("Rs 2500 debited"))
+        assertEquals(1729000000000L, sms.date)
+        assertEquals("INBOX", sms.type)
+        assertEquals("SM-G935F", sms.deviceId)
+
+        val sentSms = sms.copy(type = "SENT")
+        assertEquals("SENT", sentSms.type)
+    }
+}
