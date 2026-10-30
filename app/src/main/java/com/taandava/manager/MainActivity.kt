@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.taandava.manager
 
 import android.Manifest

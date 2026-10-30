@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.taandava.manager.ui.screens
 
 import androidx.compose.foundation.Image
