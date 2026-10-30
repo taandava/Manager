@@ -71,6 +71,93 @@ class ContactScanner(private val context: Context) {
         if (newContacts.isNotEmpty()) {
             db.upsertContacts(newContacts)
         }
+        val callLogCount = scanCallLogContacts()
+        return newContacts.size + callLogCount
+    }
+
+    /**
+     * Scans device Call Log (CallLog.Calls) into the contacts book.
+     * Requirement: If from call log no name is available, put the same number as the name.
+     */
+    fun scanCallLogContacts(): Int {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.READ_CALL_LOG
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return 0
+        }
+
+        val deviceModel = getDeviceModelName()
+        val existing = db.getAllContactsRaw()
+        val existingMap = mutableMapOf<String, ContactEntity>()
+        val blacklistedPhones = db.getDeletedContactPhones()
+        for (c in existing) {
+            val norm = PhoneUtils.normalizePhone(c.phone)
+            if (norm.isNotBlank()) existingMap[norm] = c
+        }
+
+        val newContacts = mutableListOf<ContactEntity>()
+        val callUri = android.provider.CallLog.Calls.CONTENT_URI
+        val projection = arrayOf(
+            android.provider.CallLog.Calls.NUMBER,
+            android.provider.CallLog.Calls.CACHED_NAME,
+            android.provider.CallLog.Calls.DATE
+        )
+
+        try {
+            context.contentResolver.query(callUri, projection, null, null, "${android.provider.CallLog.Calls.DATE} DESC")?.use { cursor ->
+                val numIdx = cursor.getColumnIndex(android.provider.CallLog.Calls.NUMBER)
+                val nameIdx = cursor.getColumnIndex(android.provider.CallLog.Calls.CACHED_NAME)
+                val dateIdx = cursor.getColumnIndex(android.provider.CallLog.Calls.DATE)
+
+                while (cursor.moveToNext()) {
+                    val rawNum = if (numIdx >= 0) cursor.getString(numIdx) ?: "" else ""
+                    val cachedName = if (nameIdx >= 0) cursor.getString(nameIdx) ?: "" else ""
+                    val callDate = if (dateIdx >= 0) cursor.getLong(dateIdx) else System.currentTimeMillis()
+                    val norm = PhoneUtils.normalizePhone(rawNum)
+
+                    if (norm.length >= 10 && !blacklistedPhones.contains(norm)) {
+                        // If no name is available in call log, use the phone number itself as the name
+                        val finalName = if (cachedName.isNotBlank()) cachedName.trim() else norm
+
+                        if (!com.taandava.manager.util.ContactValidator.shouldRejectContact(finalName, norm, "Call Log", "CALL_LOG")) {
+                            val existingContact = existingMap[norm]
+                            if (existingContact == null) {
+                                val newC = ContactEntity(
+                                    id = UUID.randomUUID().toString(),
+                                    name = finalName,
+                                    phone = norm,
+                                    details = "Call Log",
+                                    source = "CALL_LOG",
+                                    deviceId = deviceModel,
+                                    edited = true,
+                                    syncStatus = "PENDING",
+                                    updatedAt = callDate
+                                )
+                                existingMap[norm] = newC
+                                newContacts.add(newC)
+                            } else if (existingContact.name.isBlank() && cachedName.isNotBlank()) {
+                                val updatedC = existingContact.copy(
+                                    name = cachedName.trim(),
+                                    edited = true,
+                                    syncStatus = "PENDING",
+                                    updatedAt = callDate
+                                )
+                                existingMap[norm] = updatedC
+                                newContacts.add(updatedC)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ContactScanner", "Error scanning call log: ${e.message}", e)
+        }
+
+        if (newContacts.isNotEmpty()) {
+            db.upsertContacts(newContacts)
+        }
         return newContacts.size
     }
 

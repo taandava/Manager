@@ -100,8 +100,9 @@ fun ManagerApp(vm: MainViewModel = viewModel()) {
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
         val contactsGranted = grants[Manifest.permission.READ_CONTACTS] == true
+        val callLogGranted = grants[Manifest.permission.READ_CALL_LOG] == true
         val smsGranted = grants[Manifest.permission.READ_SMS] == true
-        if (contactsGranted) vm.autoScanDeviceContactsIfEmpty()
+        if (contactsGranted || callLogGranted) vm.autoScanDeviceContactsIfEmpty()
         if (smsGranted) vm.autoScanDeviceSmsIfEmpty()
     }
 
@@ -129,6 +130,7 @@ fun ManagerApp(vm: MainViewModel = viewModel()) {
     LaunchedEffect(Unit) {
         vm.refreshDefaultSmsRole(context)
         val hasContacts = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        val hasCallLog = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
         val hasSms = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
 
         val needed = mutableListOf<String>()
@@ -136,13 +138,16 @@ fun ManagerApp(vm: MainViewModel = viewModel()) {
             needed.add(Manifest.permission.READ_CONTACTS)
             needed.add(Manifest.permission.WRITE_CONTACTS)
         }
+        if (!hasCallLog) {
+            needed.add(Manifest.permission.READ_CALL_LOG)
+        }
         if (!hasSms) {
             needed.add(Manifest.permission.READ_SMS)
         }
         if (needed.isNotEmpty()) {
             permLauncher.launch(needed.toTypedArray())
         } else {
-            if (hasContacts) vm.autoScanDeviceContactsIfEmpty()
+            if (hasContacts || hasCallLog) vm.autoScanDeviceContactsIfEmpty()
             if (hasSms) vm.autoScanDeviceSmsIfEmpty()
         }
     }

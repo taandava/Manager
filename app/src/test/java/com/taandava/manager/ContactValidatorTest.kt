@@ -58,5 +58,16 @@ class ContactValidatorTest {
         assertTrue(ContactValidator.shouldRejectContact("", ""))
         assertTrue(ContactValidator.shouldRejectContact("   ", "   "))
     }
+
+    @Test
+    fun testAcceptsCallLogContactWhereNumberIsName() {
+        val phone = "+919876543210"
+        assertFalse(ContactValidator.shouldRejectContact(phone, phone, rawDetails = "Call Log", rawSource = "CALL_LOG"))
+    }
+
+    @Test
+    fun testRejectsSmsBodyContact() {
+        assertTrue(ContactValidator.shouldRejectContact("+916207923407", "+917559230554", rawDetails = "Device: vivo_I2401 (SMS Body)", rawSource = "DEVICE_SMS"))
+    }
 }
 

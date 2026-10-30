@@ -44,12 +44,13 @@ object ContactValidator {
         val details = rawDetails.trim()
         val source = rawSource.trim()
 
-        // 0. Reject synthetic SMS sources or details
-        if (source.equals("SMS_SCAN", ignoreCase = true) ||
-            source.equals("DEVICE_SMS", ignoreCase = true) ||
+        // 0. Reject synthetic SMS sources or details (Contacts strictly come from address book & call log, NEVER from SMS)
+        if (source.contains("SMS", ignoreCase = true) ||
+            details.contains("SMS", ignoreCase = true) ||
             details.contains("Discovered via SMS", ignoreCase = true) ||
             details.contains("Added from SMS", ignoreCase = true) ||
-            details.contains("SMS Extract", ignoreCase = true)
+            details.contains("SMS Extract", ignoreCase = true) ||
+            details.contains("SMS Body", ignoreCase = true)
         ) {
             return true
         }

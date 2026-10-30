@@ -213,6 +213,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isCloudLoading = MutableStateFlow(false)
     val isCloudLoading: StateFlow<Boolean> = _isCloudLoading.asStateFlow()
 
+    private val _isCloudLoadingMore = MutableStateFlow(false)
+    val isCloudLoadingMore: StateFlow<Boolean> = _isCloudLoadingMore.asStateFlow()
+
     private val _cloudErrorMessage = MutableStateFlow<String?>(null)
     val cloudErrorMessage: StateFlow<String?> = _cloudErrorMessage.asStateFlow()
 
@@ -1257,6 +1260,86 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _cloudErrorMessage.value = "Cloud error: ${e.message}"
             } finally {
                 _isCloudLoading.value = false
+            }
+        }
+    }
+
+    fun loadMoreCloudContacts() {
+        if (_isCloudLoading.value || _isCloudLoadingMore.value) return
+        val current = _cloudContacts.value
+        val total = _cloudTotalContacts.value
+        if (current.size >= total) return
+
+        _isCloudLoadingMore.value = true
+        val query = _cloudSearchQuery.value
+        val offset = current.size
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                syncManager.fetchCloudContacts(_cloudUrl.value, _cloudToken.value, query = query, limit = 200, offset = offset)
+                    .onSuccess { (newTotal, items) ->
+                        _cloudTotalContacts.value = newTotal
+                        if (items.isNotEmpty()) {
+                            val existingIds = current.map { it.id.ifBlank { it.phone } }.toSet()
+                            val uniqueNew = items.filter { !existingIds.contains(it.id.ifBlank { it.phone }) }
+                            _cloudContacts.value = current + uniqueNew
+                        }
+                    }
+                    .onFailure { err ->
+                        android.util.Log.w("MainViewModel", "Failed to load more cloud contacts: ${err.message}")
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Error loading more cloud contacts: ${e.message}", e)
+            } finally {
+                _isCloudLoadingMore.value = false
+            }
+        }
+    }
+
+    fun loadMoreCloudSms() {
+        if (_isCloudLoading.value || _isCloudLoadingMore.value) return
+        val current = _cloudSms.value
+        val total = _cloudTotalSms.value
+        if (current.size >= total) return
+
+        _isCloudLoadingMore.value = true
+        val query = _cloudSearchQuery.value
+        val offset = current.size
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                syncManager.fetchCloudSms(_cloudUrl.value, _cloudToken.value, query = query, limit = 200, offset = offset)
+                    .onSuccess { (newTotal, items) ->
+                        _cloudTotalSms.value = newTotal
+                        if (items.isNotEmpty()) {
+                            val existingKeys = current.map { "${it.address}_${it.date}" }.toSet()
+                            val uniqueNew = items.filter { !existingKeys.contains("${it.address}_${it.date}") }
+                            _cloudSms.value = current + uniqueNew
+                        }
+                    }
+                    .onFailure { err ->
+                        android.util.Log.w("MainViewModel", "Failed to load more cloud SMS: ${err.message}")
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Error loading more cloud SMS: ${e.message}", e)
+            } finally {
+                _isCloudLoadingMore.value = false
+            }
+        }
+    }
+
+    fun scanCallLogContacts() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _statusMessage.value = "Scanning device call log..."
+            val added = contactScanner.scanCallLogContacts()
+            _statusMessage.value = "Discovered $added contacts from call log"
+            refreshContacts()
+            refreshDuplicates()
+            refreshStats()
+            if (added > 0) {
+                val devId = getDeviceModelName()
+                val (pushed, _, _) = syncManager.syncContacts(_cloudUrl.value, _cloudToken.value, devId)
+                if (pushed > 0) {
+                    _statusMessage.value = "Discovered $added call log contacts (synced $pushed to cloud)"
+                }
             }
         }
     }

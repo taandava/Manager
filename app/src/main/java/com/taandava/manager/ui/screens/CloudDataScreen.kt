@@ -10,8 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,8 +55,40 @@ fun CloudDataViewerDialog(
     val totalSms by vm.cloudTotalSms.collectAsState()
     val overview by vm.cloudOverview.collectAsState()
     val isLoading by vm.isCloudLoading.collectAsState()
+    val isLoadingMore by vm.isCloudLoadingMore.collectAsState()
     val errorMessage by vm.cloudErrorMessage.collectAsState()
     val cloudUrl by vm.cloudUrl.collectAsState()
+
+    val contactsListState = rememberLazyListState()
+    val smsListState = rememberLazyListState()
+
+    val shouldLoadMoreContacts by remember {
+        derivedStateOf {
+            val total = contactsListState.layoutInfo.totalItemsCount
+            val lastVisible = contactsListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            total > 0 && lastVisible >= total - 4 && contacts.size < totalContacts && !isLoading && !isLoadingMore
+        }
+    }
+
+    LaunchedEffect(shouldLoadMoreContacts) {
+        if (shouldLoadMoreContacts) {
+            vm.loadMoreCloudContacts()
+        }
+    }
+
+    val shouldLoadMoreSms by remember {
+        derivedStateOf {
+            val total = smsListState.layoutInfo.totalItemsCount
+            val lastVisible = smsListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            total > 0 && lastVisible >= total - 4 && smsList.size < totalSms && !isLoading && !isLoadingMore
+        }
+    }
+
+    LaunchedEffect(shouldLoadMoreSms) {
+        if (shouldLoadMoreSms) {
+            vm.loadMoreCloudSms()
+        }
+    }
 
     val hostName = remember(cloudUrl) {
         try {
@@ -320,9 +351,10 @@ fun CloudDataViewerDialog(
                             )
                         } else {
                             LazyColumn(
+                                state = contactsListState,
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(bottom = 16.dp)
+                                contentPadding = PaddingValues(bottom = 24.dp)
                             ) {
                                 items(contacts, key = { it.id.ifBlank { it.phone } }) { contact ->
                                     CloudContactCard(
@@ -358,6 +390,66 @@ fun CloudDataViewerDialog(
                                         }
                                     )
                                 }
+
+                                item {
+                                    if (isLoadingMore) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    strokeWidth = 2.dp,
+                                                    color = GlassCyan
+                                                )
+                                                Text(
+                                                    "Loading more contacts (${contacts.size} of $totalContacts)...",
+                                                    fontSize = 11.5.sp,
+                                                    color = TextMuted
+                                                )
+                                            }
+                                        }
+                                    } else if (contacts.size < totalContacts) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = { vm.loadMoreCloudContacts() },
+                                                border = BorderStroke(1.dp, GlassCyan.copy(alpha = 0.5f)),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "Load More (${contacts.size} of $totalContacts)",
+                                                    color = GlassCyan,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
+                                    } else if (contacts.isNotEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                "Showing all $totalContacts cloud contacts",
+                                                fontSize = 11.5.sp,
+                                                color = TextMuted
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -370,9 +462,10 @@ fun CloudDataViewerDialog(
                             )
                         } else {
                             LazyColumn(
+                                state = smsListState,
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(bottom = 16.dp)
+                                contentPadding = PaddingValues(bottom = 24.dp)
                             ) {
                                 items(smsList, key = { it.id.ifBlank { "${it.address}_${it.date}" } }) { sms ->
                                     CloudSmsCard(
@@ -403,6 +496,66 @@ fun CloudDataViewerDialog(
                                             }
                                         }
                                     )
+                                }
+
+                                item {
+                                    if (isLoadingMore) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    strokeWidth = 2.dp,
+                                                    color = GlassPurple
+                                                )
+                                                Text(
+                                                    "Loading more SMS (${smsList.size} of $totalSms)...",
+                                                    fontSize = 11.5.sp,
+                                                    color = TextMuted
+                                                )
+                                            }
+                                        }
+                                    } else if (smsList.size < totalSms) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = { vm.loadMoreCloudSms() },
+                                                border = BorderStroke(1.dp, GlassPurple.copy(alpha = 0.5f)),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "Load More (${smsList.size} of $totalSms)",
+                                                    color = GlassPurple,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
+                                    } else if (smsList.isNotEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                "Showing all $totalSms cloud SMS logs",
+                                                fontSize = 11.5.sp,
+                                                color = TextMuted
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

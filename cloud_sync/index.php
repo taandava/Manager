@@ -49,25 +49,46 @@ function normalizePhone($phone) {
  */
 function isSmsHeaderOrSyntheticContact($name, $phone = '', $details = '') {
     $tName = trim((string)$name);
-    if (empty($tName)) return false;
-    // TRAI format: 2 alpha chars, hyphen, alphanumeric code, optional sub-code
-    if (preg_match('/^[A-Za-z]{2}-[A-Za-z0-9]{3,14}(?:-[A-Za-z0-9]+)?$/', $tName)) {
-        return true;
-    }
-    // Generic SMS/OTP prefixes
-    if (preg_match('/^(?:SMS|MSG|OTP|TXN|VK|BZ|JM|AD|VM|AX|CP|BW|MD|BP)[-_]/i', $tName)) {
-        return true;
-    }
-    // Details tag indicating SMS extraction
-    $tDetails = (string)$details;
+    $tPhone = trim((string)$phone);
+    $tDetails = trim((string)$details);
+
+    if (empty($tName) && empty($tPhone)) return true;
+
+    // Reject any entry marked with SMS details
     if (!empty($tDetails)) {
-        if (stripos($tDetails, 'Discovered via SMS') !== false ||
+        if (stripos($tDetails, 'SMS') !== false ||
+            stripos($tDetails, 'Discovered via SMS') !== false ||
             stripos($tDetails, 'SMS_SCAN') !== false ||
             stripos($tDetails, 'SMS Body') !== false ||
             stripos($tDetails, 'source:SMS') !== false) {
             return true;
         }
     }
+
+    if (empty($tName)) return false;
+
+    // TRAI format: 2 alpha chars, hyphen, alphanumeric code, optional sub-code (e.g. AD-AXISBK)
+    if (preg_match('/^[A-Za-z]{2}-[A-Za-z0-9]{3,14}(?:-[A-Za-z0-9]+)?$/', $tName)) {
+        return true;
+    }
+
+    // Generic SMS/OTP prefixes
+    if (preg_match('/^(?:SMS|MSG|OTP|TXN|VK|BZ|JM|AD|VM|AX|CP|BW|MD|BP)[-_]/i', $tName)) {
+        return true;
+    }
+
+    // Rule: Never extract contacts from SMS data.
+    // If name contains no letters at all (purely digits, symbols, punctuation)
+    // Check if name is a DIFFERENT phone number than the actual contact phone (synthetic SMS extracted pair)
+    $hasLetters = preg_match('/[\p{L}]/u', $tName);
+    if (!$hasLetters) {
+        $normName = normalizePhone($tName);
+        $normPhone = normalizePhone($tPhone);
+        if (!empty($normName) && !empty($normPhone) && $normName !== $normPhone) {
+            return true;
+        }
+    }
+
     return false;
 }
 
