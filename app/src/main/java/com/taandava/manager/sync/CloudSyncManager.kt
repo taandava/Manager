@@ -146,6 +146,9 @@ class CloudSyncManager(context: Context) {
                         )
                     )
                 }
+                if (list.isNotEmpty()) {
+                    db.appendCloudContacts(list)
+                }
                 Result.success(Pair(total, list))
             }
         } catch (e: Exception) {

@@ -1238,13 +1238,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (targetTab == 0) {
+                    // Instantly show locally cached cloud contacts from SQLite for 0ms fast search
+                    val (localTotal, localCached) = db.getCloudContacts(query = query, limit = 200, offset = 0)
+                    if (localCached.isNotEmpty() && _cloudContacts.value.isEmpty()) {
+                        _cloudTotalContacts.value = localTotal
+                        _cloudContacts.value = localCached
+                    }
+
                     syncManager.fetchCloudContacts(_cloudUrl.value, _cloudToken.value, query = query, limit = 200)
                         .onSuccess { (total, items) ->
                             _cloudTotalContacts.value = total
                             _cloudContacts.value = items
+                            refreshContacts()
+                            refreshStats()
                         }
                         .onFailure { err ->
-                            _cloudErrorMessage.value = "Failed to load cloud contacts: ${err.message}"
+                            // If network failed but we have local cached records, keep displaying them
+                            if (localCached.isNotEmpty()) {
+                                _cloudTotalContacts.value = localTotal
+                                _cloudContacts.value = localCached
+                            } else {
+                                _cloudErrorMessage.value = "Failed to load cloud contacts: ${err.message}"
+                            }
                         }
                 } else {
                     syncManager.fetchCloudSms(_cloudUrl.value, _cloudToken.value, query = query, limit = 200)
@@ -1282,6 +1297,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             val existingIds = current.map { it.id.ifBlank { it.phone } }.toSet()
                             val uniqueNew = items.filter { !existingIds.contains(it.id.ifBlank { it.phone }) }
                             _cloudContacts.value = current + uniqueNew
+                            refreshContacts()
+                            refreshStats()
                         }
                     }
                     .onFailure { err ->

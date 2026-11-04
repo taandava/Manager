@@ -89,4 +89,44 @@ class CloudDataModelsTest {
         val sentSms = sms.copy(type = "SENT")
         assertEquals("SENT", sentSms.type)
     }
+
+    @Test
+    fun testCloudContactItemFallbackAndAppendModeProperties() {
+        val blankNameContact = CloudContactItem(
+            id = "",
+            name = "",
+            phone = "+919876543210",
+            details = "Call Log",
+            saved = false,
+            updatedAt = 1730000000000L,
+            deviceId = "OPPO_CPH2781"
+        )
+
+        // When name is blank, the phone number should serve as fallback display name
+        val normPhone = com.taandava.manager.util.PhoneUtils.normalizePhone(blankNameContact.phone)
+        val displayName = blankNameContact.name.trim().ifBlank { normPhone }
+        assertEquals("+919876543210", displayName)
+
+        // Deterministic UUID for append mode when id is blank
+        val generatedId = java.util.UUID.nameUUIDFromBytes("cloud_$normPhone".toByteArray()).toString()
+        assertNotNull(generatedId)
+        assertTrue(generatedId.isNotBlank())
+
+        val contactEntity = com.taandava.manager.data.ContactEntity(
+            id = generatedId,
+            name = displayName,
+            phone = normPhone,
+            details = blankNameContact.details,
+            saved = blankNameContact.saved,
+            source = "HOSTINGER_CSV",
+            syncStatus = "SYNCED",
+            deviceId = blankNameContact.deviceId
+        )
+
+        assertEquals("+919876543210", contactEntity.name)
+        assertEquals("+919876543210", contactEntity.phone)
+        assertEquals("HOSTINGER_CSV", contactEntity.source)
+        assertEquals("SYNCED", contactEntity.syncStatus)
+        assertTrue(com.taandava.manager.util.ContactValidator.isValidContact(contactEntity.name, contactEntity.phone, contactEntity.details, contactEntity.source))
+    }
 }

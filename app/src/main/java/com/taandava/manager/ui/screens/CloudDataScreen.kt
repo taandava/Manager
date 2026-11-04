@@ -41,6 +41,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 fun CloudDataViewerDialog(
     vm: MainViewModel,
     onDismiss: () -> Unit,
@@ -93,7 +94,8 @@ fun CloudDataViewerDialog(
     val hostName = remember(cloudUrl) {
         try {
             java.net.URI(cloudUrl).host ?: "Hostinger Cloud"
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            android.util.Log.w("CloudDataScreen", "Invalid cloud URI: ${e.message}")
             "Hostinger Cloud"
         }
     }
@@ -567,6 +569,7 @@ fun CloudDataViewerDialog(
 }
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 private fun CloudStatPill(
     label: String,
     value: String,
@@ -589,6 +592,7 @@ private fun CloudStatPill(
 }
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 private fun CloudContactCard(
     contact: CloudContactItem,
     onCall: () -> Unit,
@@ -741,6 +745,7 @@ private fun CloudContactCard(
 }
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 private fun CloudSmsCard(
     sms: CloudSmsItem,
     onCopy: () -> Unit,
@@ -869,6 +874,7 @@ private fun CloudSmsCard(
 }
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 private fun EmptyCloudState(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,

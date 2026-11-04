@@ -378,12 +378,23 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         val list = mutableListOf<ContactEntity>()
         try {
             val db = readableDatabase
+            val selectionArgs = mutableListOf<String>()
             val selection = StringBuilder("$COL_C_DELETED = 0")
             if (savedOnly) {
                 selection.append(" AND $COL_C_SAVED = 1")
             }
 
-            val cursor = db.query(TABLE_CONTACTS, null, selection.toString(), null, null, null, "$COL_C_NAME COLLATE NOCASE ASC")
+            val qTrim = query.trim()
+            if (qTrim.isNotBlank()) {
+                val digitsOnly = qTrim.filter { it.isDigit() }
+                selection.append(" AND ($COL_C_NAME LIKE ? OR $COL_C_PHONE LIKE ? OR $COL_C_DETAILS LIKE ?)")
+                selectionArgs.add("%$qTrim%")
+                selectionArgs.add(if (digitsOnly.length >= 3) "%$digitsOnly%" else "%$qTrim%")
+                selectionArgs.add("%$qTrim%")
+            }
+
+            val argsArray = if (selectionArgs.isNotEmpty()) selectionArgs.toTypedArray() else null
+            val cursor = db.query(TABLE_CONTACTS, null, selection.toString(), argsArray, null, null, "$COL_C_NAME COLLATE NOCASE ASC")
             cursor.use {
                 val qNorm = PhoneUtils.normalizeSearch(query)
                 val idIdx = it.getColumnIndex(COL_C_ID)
@@ -557,6 +568,160 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
             Log.e("LocalDb", "Error in getContactTimestampsMap: ${e.message}", e)
         }
         return map
+    }
+
+    @Synchronized
+    fun getPendingEditedContactIds(): Set<String> {
+        val set = mutableSetOf<String>()
+        try {
+            readableDatabase.rawQuery("SELECT $COL_C_ID FROM $TABLE_CONTACTS WHERE $COL_C_EDITED = 1 AND $COL_C_DELETED = 0", null).use { c ->
+                while (c.moveToNext()) {
+                    val id = c.getString(0)
+                    if (!id.isNullOrBlank()) {
+                        set.add(id)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getPendingEditedContactIds: ${e.message}", e)
+        }
+        return set
+    }
+
+    /**
+     * Appends and updates cloud contacts in the local SQLite database.
+     * In append mode:
+     * - New cloud contacts are appended into TABLE_CONTACTS.
+     * - Existing contacts are updated only if cloud has equal or newer timestamp.
+     * - Locally edited un-synced contacts are preserved (never overwritten).
+     * - Deleted contacts in blacklists are never resurrected.
+     * - Existing contacts are never pruned or deleted.
+     */
+    @Synchronized
+    fun appendCloudContacts(items: List<CloudContactItem>): Int {
+        if (items.isEmpty()) return 0
+        val blacklistedIds = getDeletedContactIds()
+        val blacklistedPhones = getDeletedContactPhones()
+        val activePhoneSet = getActiveNormalizedPhones()
+        val localTimestamps = getContactTimestampsMap()
+        val pendingEditedIds = getPendingEditedContactIds()
+
+        val entitiesToUpsert = mutableListOf<ContactEntity>()
+        items.forEach { item ->
+            val normPhone = PhoneUtils.normalizePhone(item.phone)
+            val name = item.name.trim()
+            val phone = normPhone.ifBlank { item.phone.trim() }
+            val displayName = name.ifBlank { phone }
+
+            // Guardrail validation: never store invalid or empty contacts
+            if (!ContactValidator.isValidContact(displayName, phone, item.details, "HOSTINGER_CSV")) {
+                return@forEach
+            }
+
+            val id = item.id.ifBlank {
+                java.util.UUID.nameUUIDFromBytes("cloud_$normPhone".toByteArray()).toString()
+            }
+
+            // Anti-resurrection guardrail: skip if user deleted this contact locally
+            if (blacklistedIds.contains(id) || (blacklistedPhones.contains(normPhone) && !activePhoneSet.contains(normPhone))) {
+                return@forEach
+            }
+
+            // Never overwrite pending local user edits
+            if (pendingEditedIds.contains(id)) {
+                return@forEach
+            }
+
+            val localUpdated = localTimestamps[id]
+            val cloudUpdated = if (item.updatedAt > 0) item.updatedAt else System.currentTimeMillis()
+
+            // In append mode: add if new locally, or update if cloud timestamp is equal or newer
+            if (localUpdated == null || cloudUpdated >= localUpdated) {
+                entitiesToUpsert.add(
+                    ContactEntity(
+                        id = id,
+                        name = displayName,
+                        phone = phone,
+                        details = item.details,
+                        saved = item.saved,
+                        edited = false,
+                        deleted = false,
+                        createdAt = cloudUpdated,
+                        updatedAt = cloudUpdated,
+                        source = "HOSTINGER_CSV",
+                        cloudId = id,
+                        syncStatus = "SYNCED",
+                        deviceId = item.deviceId
+                    )
+                )
+            }
+        }
+
+        if (entitiesToUpsert.isNotEmpty()) {
+            upsertContacts(entitiesToUpsert)
+        }
+        return entitiesToUpsert.size
+    }
+
+    /**
+     * Retrieves cloud-sourced contacts cached locally in SQLite for ultra-fast, offline search.
+     */
+    @Synchronized
+    fun getCloudContacts(query: String = "", limit: Int = 200, offset: Int = 0): Pair<Int, List<CloudContactItem>> {
+        val list = mutableListOf<CloudContactItem>()
+        var total = 0
+        try {
+            val db = readableDatabase
+            val selectionArgs = mutableListOf<String>()
+            val whereClause = StringBuilder("$COL_C_SOURCE = 'HOSTINGER_CSV' AND $COL_C_DELETED = 0")
+
+            val qTrim = query.trim()
+            if (qTrim.isNotBlank()) {
+                val digits = qTrim.filter { it.isDigit() }
+                whereClause.append(" AND ($COL_C_NAME LIKE ? OR $COL_C_PHONE LIKE ? OR $COL_C_DETAILS LIKE ?)")
+                selectionArgs.add("%$qTrim%")
+                selectionArgs.add(if (digits.length >= 3) "%$digits%" else "%$qTrim%")
+                selectionArgs.add("%$qTrim%")
+            }
+
+            val argsArray = if (selectionArgs.isNotEmpty()) selectionArgs.toTypedArray() else null
+
+            // Count total matching
+            db.rawQuery("SELECT COUNT(*) FROM $TABLE_CONTACTS WHERE $whereClause", argsArray).use { c ->
+                if (c.moveToNext()) {
+                    total = c.getInt(0)
+                }
+            }
+
+            // Retrieve paginated
+            val querySql = "SELECT $COL_C_ID, $COL_C_NAME, $COL_C_PHONE, $COL_C_DETAILS, $COL_C_SAVED, $COL_C_UPDATED_AT, $COL_C_DEVICE_ID FROM $TABLE_CONTACTS WHERE $whereClause ORDER BY $COL_C_NAME COLLATE NOCASE ASC LIMIT $limit OFFSET $offset"
+            db.rawQuery(querySql, argsArray).use { c ->
+                val idIdx = c.getColumnIndex(COL_C_ID)
+                val nameIdx = c.getColumnIndex(COL_C_NAME)
+                val phoneIdx = c.getColumnIndex(COL_C_PHONE)
+                val detailsIdx = c.getColumnIndex(COL_C_DETAILS)
+                val savedIdx = c.getColumnIndex(COL_C_SAVED)
+                val updatedIdx = c.getColumnIndex(COL_C_UPDATED_AT)
+                val devIdx = c.getColumnIndex(COL_C_DEVICE_ID)
+
+                while (c.moveToNext()) {
+                    list.add(
+                        CloudContactItem(
+                            id = if (idIdx >= 0) c.getString(idIdx) ?: "" else "",
+                            name = if (nameIdx >= 0) c.getString(nameIdx) ?: "" else "",
+                            phone = if (phoneIdx >= 0) c.getString(phoneIdx) ?: "" else "",
+                            details = if (detailsIdx >= 0) c.getString(detailsIdx) ?: "" else "",
+                            saved = if (savedIdx >= 0) c.getInt(savedIdx) == 1 else false,
+                            updatedAt = if (updatedIdx >= 0) c.getLong(updatedIdx) else 0L,
+                            deviceId = if (devIdx >= 0) c.getString(devIdx) ?: "" else ""
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getCloudContacts: ${e.message}", e)
+        }
+        return Pair(total, list)
     }
 
     @Synchronized
