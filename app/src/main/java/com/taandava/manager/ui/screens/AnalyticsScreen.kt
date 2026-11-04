@@ -19,6 +19,7 @@ import com.taandava.manager.ui.components.ManagerLogo
 import com.taandava.manager.ui.*
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 fun MetricCard(title: String, value: String, color: Color, modifier: Modifier = Modifier) {
     GlassCard(modifier = modifier) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -29,6 +30,7 @@ fun MetricCard(title: String, value: String, color: Color, modifier: Modifier = 
 }
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 fun AnalyticsScreen(vm: MainViewModel) {
     val stats by vm.stats.collectAsState()
 

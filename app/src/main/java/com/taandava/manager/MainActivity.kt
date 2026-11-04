@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 fun ManagerApp(vm: MainViewModel = viewModel()) {
     val context = LocalContext.current
     val currentTab by vm.currentTab.collectAsState()

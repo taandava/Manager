@@ -345,12 +345,12 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         val blacklistedIds = getDeletedContactIds()
         for (chunk in list.chunked(500)) {
             db.transaction {
-                for (c in chunk) {
+                chunk.forEach { c ->
                     if (!ContactValidator.isValidContact(c.name, c.phone, c.details, c.source)) {
-                        continue // REJECT: Invalid, synthetic SMS, or mismatched number contact entry
+                        return@forEach // REJECT: Invalid, synthetic SMS, or mismatched number contact entry
                     }
                     if (!c.deleted && blacklistedIds.contains(c.id)) {
-                        continue // REJECT: Contact was explicitly deleted by the user! Prevent resurrection!
+                        return@forEach // REJECT: Contact was explicitly deleted by the user! Prevent resurrection!
                     }
                     val cv = ContentValues().apply {
                         put(COL_C_ID, c.id)
@@ -490,7 +490,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         try {
             db.transaction {
                 val now = System.currentTimeMillis()
-                for (c in contacts) {
+                contacts.forEach { c ->
                     val cv = ContentValues().apply {
                         put(COL_DC_ID, c.id)
                         put(COL_DC_PHONE, c.phone)
@@ -793,11 +793,10 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         try {
             val now = System.currentTimeMillis()
             db.transaction {
-                for (g in dupes) {
-                    if (g.contacts.size <= 1) continue
-                    val list = g.contacts
-                    val survivor = SmartMergeConfig.resolveSurvivor(list, g.phone, config)
-                    val toDelete = list.filter { it.id != survivor.id }
+                for ((phone, contacts) in dupes) {
+                    if (contacts.size <= 1) continue
+                    val survivor = SmartMergeConfig.resolveSurvivor(contacts, phone, config)
+                    val toDelete = contacts.filter { it.id != survivor.id }
 
                     val cv = ContentValues().apply {
                         put(COL_C_ID, survivor.id)
@@ -826,7 +825,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                         update(TABLE_CONTACTS, delCv, "$COL_C_ID = ?", arrayOf(del.id))
                     }
 
-                    results.add(SmartMergeResult(survivor, toDelete, g.phone))
+                    results.add(SmartMergeResult(survivor, toDelete, phone))
                 }
 
                 val allDeleted = results.flatMap { it.deletedContacts }
@@ -1037,7 +1036,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         val db = writableDatabase
         try {
             db.transaction {
-                for (item in items) {
+                items.forEach { item ->
                     val cv = ContentValues().apply {
                         put(COL_S_ADDRESS, item.address)
                         put(COL_S_NORMALIZED, item.normalizedNumber)

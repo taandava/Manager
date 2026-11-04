@@ -34,6 +34,7 @@ import com.taandava.manager.util.NameDisambiguator
 import com.taandava.manager.util.PhoneUtils
 
 @Composable
+@Suppress("FunctionName") // Standard Jetpack Compose PascalCase UI component convention
 fun DuplicatesScreen(
     vm: MainViewModel,
     onNavigateToContacts: () -> Unit = {}

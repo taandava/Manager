@@ -498,7 +498,7 @@ if ($isApiRequest) {
                     'name'       => $displayName,
                     'phone'      => $cPhone,
                     'details'    => $r['details'],
-                    'saved'      => ($r['saved'] === '1' || $r['saved'] === true),
+                    'saved'      => ($r['saved'] === '1' || $r['saved'] === 'true'),
                     'updated_at' => intval($r['updated_at']),
                     'deleted'    => false,
                     'device_id'  => $r['device_id'],
@@ -2309,7 +2309,7 @@ usort($displaySmsRows, function($a, $b) {
                          data-phone="<?php echo htmlspecialchars($r['phone']); ?>"
                          data-details="<?php echo htmlspecialchars($r['details']); ?>"
                          data-device="<?php echo htmlspecialchars($r['device_id']); ?>"
-                         data-saved="<?php echo ($r['saved'] === '1' || $r['saved'] === true) ? '1' : '0'; ?>">
+                         data-saved="<?php echo (!empty($r['saved']) && $r['saved'] !== '0' && $r['saved'] !== 'false') ? '1' : '0'; ?>">
 
                         <!-- Top Row: Avatar, Name, Phone & Device beside Favorite Star -->
                         <div class="card-top-row">
@@ -2331,8 +2331,8 @@ usort($displaySmsRows, function($a, $b) {
                                 <span class="device-badge-pill">
                                     📱 <?php echo htmlspecialchars($r['device_id'] ?: 'DEV'); ?>
                                 </span>
-                                <span class="star-pill <?php echo ($r['saved'] === '1' || $r['saved'] === true) ? 'active' : ''; ?>">
-                                    <?php echo ($r['saved'] === '1' || $r['saved'] === true) ? '⭐' : '☆'; ?>
+                                <span class="star-pill <?php echo (!empty($r['saved']) && $r['saved'] !== '0' && $r['saved'] !== 'false') ? 'active' : ''; ?>">
+                                    <?php echo (!empty($r['saved']) && $r['saved'] !== '0' && $r['saved'] !== 'false') ? '⭐' : '☆'; ?>
                                 </span>
                             </div>
                         </div>
