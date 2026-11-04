@@ -25,13 +25,19 @@ $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 ```powershell
 .\gradlew.bat test
 ```
-*(All 63 tests across 9 test suites must pass.)*
+*(All 64 tests across 9 test suites must pass.)*
+
+### Lint Verification:
+```powershell
+.\gradlew.bat lintDebug
+```
+*(0 errors, clean output.)*
 
 ### Build Signed Release APK:
 ```powershell
 .\gradlew.bat assembleRelease copyReleaseApk
 ```
-This runs R8 resource and code shrinking, signs with release keystore, and copies the resulting APK to `release/app-manager-v4.0.apk`.
+This runs R8 resource and code shrinking, signs with release keystore (v2 + v3 schemes), and copies the resulting APK to `release/app-manager-v4.0.apk`.
 
 ---
 
