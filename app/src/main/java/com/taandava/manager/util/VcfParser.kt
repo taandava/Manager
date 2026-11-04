@@ -1,5 +1,3 @@
-@file:Suppress("DestructuringDeclaration")
-
 package com.taandava.manager.util
 
 import com.taandava.manager.data.ContactEntity

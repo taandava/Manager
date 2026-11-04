@@ -1,5 +1,3 @@
-@file:Suppress("DestructuringDeclaration")
-
 package com.taandava.manager.data
 
 import android.content.ContentValues
@@ -7,12 +5,13 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import androidx.core.database.sqlite.transaction
 import com.taandava.manager.util.ContactValidator
 import com.taandava.manager.util.NameDisambiguator
 import com.taandava.manager.util.PhoneUtils
 import com.taandava.manager.util.SmsClassifier
 
-@Suppress("UseKtx")
 class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.applicationContext, DATABASE_NAME, null, DATABASE_VERSION) {
 
     private val appContext = context.applicationContext
@@ -121,6 +120,32 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         ensureSchema(db)
     }
 
+    private fun addColumnIfNotExists(db: SQLiteDatabase, table: String, column: String, typeDefinition: String) {
+        val columnExists = try {
+            db.rawQuery("PRAGMA table_info($table)", null).use { cursor ->
+                val nameIdx = cursor.getColumnIndex("name")
+                var exists = false
+                while (cursor.moveToNext()) {
+                    if (nameIdx >= 0 && cursor.getString(nameIdx).equals(column, ignoreCase = true)) {
+                        exists = true
+                        break
+                    }
+                }
+                exists
+            }
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error checking column $table.$column: ${e.message}", e)
+            false
+        }
+        if (!columnExists) {
+            try {
+                db.execSQL("ALTER TABLE $table ADD COLUMN $column $typeDefinition")
+            } catch (e: Exception) {
+                Log.w("LocalDb", "Column $table.$column addition deferred: ${e.message}")
+            }
+        }
+    }
+
     private fun ensureSchema(db: SQLiteDatabase) {
         try {
             // Contacts Table
@@ -143,13 +168,13 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
             """.trimIndent()
             db.execSQL(createContacts)
 
-            try { db.execSQL("ALTER TABLE $TABLE_CONTACTS ADD COLUMN $COL_C_DEVICE_ID TEXT") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_phone ON $TABLE_CONTACTS($COL_C_PHONE)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_name ON $TABLE_CONTACTS($COL_C_NAME)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_updated ON $TABLE_CONTACTS($COL_C_UPDATED_AT)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_saved ON $TABLE_CONTACTS($COL_C_SAVED)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_deleted ON $TABLE_CONTACTS($COL_C_DELETED)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_device ON $TABLE_CONTACTS($COL_C_DEVICE_ID)") } catch (_: Exception) {}
+            addColumnIfNotExists(db, TABLE_CONTACTS, COL_C_DEVICE_ID, "TEXT")
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_phone ON $TABLE_CONTACTS($COL_C_PHONE)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_phone: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_name ON $TABLE_CONTACTS($COL_C_NAME)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_name: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_updated ON $TABLE_CONTACTS($COL_C_UPDATED_AT)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_updated: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_saved ON $TABLE_CONTACTS($COL_C_SAVED)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_saved: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_deleted ON $TABLE_CONTACTS($COL_C_DELETED)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_deleted: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_device ON $TABLE_CONTACTS($COL_C_DEVICE_ID)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_device: ${e.message}", e) }
 
             // SMS Ledger Table
             val createSms = """
@@ -173,18 +198,18 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                 )
             """.trimIndent()
             db.execSQL(createSms)
-            try { db.execSQL("ALTER TABLE $TABLE_SMS ADD COLUMN $COL_S_DEVICE_SMS_ID INTEGER DEFAULT 0") } catch (_: Exception) {}
-            try { db.execSQL("ALTER TABLE $TABLE_SMS ADD COLUMN $COL_S_CATEGORY TEXT NOT NULL DEFAULT 'GENERAL'") } catch (_: Exception) {}
-            try { db.execSQL("ALTER TABLE $TABLE_SMS ADD COLUMN $COL_S_SENDER_TYPE TEXT NOT NULL DEFAULT 'Unknown'") } catch (_: Exception) {}
-            try { db.execSQL("ALTER TABLE $TABLE_SMS ADD COLUMN $COL_S_OTP TEXT") } catch (_: Exception) {}
-            try { db.execSQL("ALTER TABLE $TABLE_SMS ADD COLUMN $COL_S_AMOUNT TEXT") } catch (_: Exception) {}
-            try { db.execSQL("ALTER TABLE $TABLE_SMS ADD COLUMN $COL_S_IS_DEBIT INTEGER") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_date ON $TABLE_SMS($COL_S_DATE DESC)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_norm ON $TABLE_SMS($COL_S_NORMALIZED)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_type ON $TABLE_SMS($COL_S_TYPE)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_synced ON $TABLE_SMS($COL_S_IS_SYNCED)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_device_sms_id ON $TABLE_SMS($COL_S_DEVICE_SMS_ID)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_category ON $TABLE_SMS($COL_S_CATEGORY)") } catch (_: Exception) {}
+            addColumnIfNotExists(db, TABLE_SMS, COL_S_DEVICE_SMS_ID, "INTEGER DEFAULT 0")
+            addColumnIfNotExists(db, TABLE_SMS, COL_S_CATEGORY, "TEXT NOT NULL DEFAULT 'GENERAL'")
+            addColumnIfNotExists(db, TABLE_SMS, COL_S_SENDER_TYPE, "TEXT NOT NULL DEFAULT 'Unknown'")
+            addColumnIfNotExists(db, TABLE_SMS, COL_S_OTP, "TEXT")
+            addColumnIfNotExists(db, TABLE_SMS, COL_S_AMOUNT, "TEXT")
+            addColumnIfNotExists(db, TABLE_SMS, COL_S_IS_DEBIT, "INTEGER")
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_date ON $TABLE_SMS($COL_S_DATE DESC)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_sms_date: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_norm ON $TABLE_SMS($COL_S_NORMALIZED)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_sms_norm: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_type ON $TABLE_SMS($COL_S_TYPE)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_sms_type: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_synced ON $TABLE_SMS($COL_S_IS_SYNCED)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_sms_synced: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_device_sms_id ON $TABLE_SMS($COL_S_DEVICE_SMS_ID)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_sms_device_sms_id: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_category ON $TABLE_SMS($COL_S_CATEGORY)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_sms_category: ${e.message}", e) }
 
             // Deleted SMS Table
             val createDeletedSms = """
@@ -206,13 +231,15 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                 )
             """.trimIndent()
             db.execSQL(createDeletedContacts)
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_dc_norm ON $TABLE_DELETED_CONTACTS($COL_DC_NORMALIZED)") } catch (_: Exception) {}
-            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_dc_synced ON $TABLE_DELETED_CONTACTS($COL_DC_IS_SYNCED)") } catch (_: Exception) {}
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_dc_norm ON $TABLE_DELETED_CONTACTS($COL_DC_NORMALIZED)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_dc_norm: ${e.message}", e) }
+            try { db.execSQL("CREATE INDEX IF NOT EXISTS idx_dc_synced ON $TABLE_DELETED_CONTACTS($COL_DC_IS_SYNCED)") } catch (e: Exception) { Log.e("LocalDb", "Index error idx_dc_synced: ${e.message}", e) }
 
             // Clean legacy duplicate device string saved into details column
             try {
                 db.execSQL("UPDATE $TABLE_CONTACTS SET $COL_C_DETAILS = '' WHERE $COL_C_DETAILS LIKE 'Device: %'")
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w("LocalDb", "Legacy device cleanup deferred: ${e.message}")
+            }
 
             // Purge invalid number contacts and mismatched phone entries from existing database
             try {
@@ -255,8 +282,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         }
 
         if (toDeleteIds.isNotEmpty()) {
-            db.beginTransaction()
-            try {
+            db.transaction {
                 val now = System.currentTimeMillis()
                 for (chunk in toDeleteIds.chunked(500)) {
                     val placeholders = chunk.joinToString(",") { "?" }
@@ -270,11 +296,8 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     )
                     deletedCount += chunk.size
                 }
-                db.setTransactionSuccessful()
-            } finally {
-                db.endTransaction()
             }
-            android.util.Log.i("LocalDb", "Purged $deletedCount SMS/invalid/mismatched number contacts from database")
+            Log.i("LocalDb", "Purged $deletedCount SMS/invalid/mismatched number contacts from database")
         }
         return deletedCount
     }
@@ -321,8 +344,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         val db = writableDatabase
         val blacklistedIds = getDeletedContactIds()
         for (chunk in list.chunked(500)) {
-            db.beginTransaction()
-            try {
+            db.transaction {
                 for (c in chunk) {
                     if (!ContactValidator.isValidContact(c.name, c.phone, c.details, c.source)) {
                         continue // REJECT: Invalid, synthetic SMS, or mismatched number contact entry
@@ -345,11 +367,8 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                         put(COL_C_SYNC_STATUS, c.syncStatus)
                         put(COL_C_DEVICE_ID, c.deviceId)
                     }
-                    db.insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                    insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
                 }
-                db.setTransactionSuccessful()
-            } finally {
-                db.endTransaction()
             }
         }
     }
@@ -468,24 +487,22 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
     fun recordDeletedContacts(contacts: List<ContactEntity>, isSynced: Boolean = false, blacklistPhone: Boolean = true) {
         if (contacts.isEmpty()) return
         val db = writableDatabase
-        db.beginTransaction()
         try {
-            val now = System.currentTimeMillis()
-            for (c in contacts) {
-                val cv = ContentValues().apply {
-                    put(COL_DC_ID, c.id)
-                    put(COL_DC_PHONE, c.phone)
-                    put(COL_DC_NORMALIZED, if (blacklistPhone) PhoneUtils.normalizePhone(c.phone) else "")
-                    put(COL_DC_DELETED_AT, now)
-                    put(COL_DC_IS_SYNCED, if (isSynced) 1 else 0)
+            db.transaction {
+                val now = System.currentTimeMillis()
+                for (c in contacts) {
+                    val cv = ContentValues().apply {
+                        put(COL_DC_ID, c.id)
+                        put(COL_DC_PHONE, c.phone)
+                        put(COL_DC_NORMALIZED, if (blacklistPhone) PhoneUtils.normalizePhone(c.phone) else "")
+                        put(COL_DC_DELETED_AT, now)
+                        put(COL_DC_IS_SYNCED, if (isSynced) 1 else 0)
+                    }
+                    insertWithOnConflict(TABLE_DELETED_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
                 }
-                db.insertWithOnConflict(TABLE_DELETED_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
             }
-            db.setTransactionSuccessful()
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in recordDeletedContacts: ${e.message}", e)
-        } finally {
-            db.endTransaction()
+            Log.e("LocalDb", "Error in recordDeletedContacts: ${e.message}", e)
         }
     }
 
@@ -518,7 +535,9 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     }
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getActiveNormalizedPhones: ${e.message}", e)
+        }
         return set
     }
 
@@ -534,7 +553,9 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     }
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getContactTimestampsMap: ${e.message}", e)
+        }
         return map
     }
 
@@ -547,7 +568,9 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     set.add(c.getString(0))
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getDeletedContactIds: ${e.message}", e)
+        }
         return set
     }
 
@@ -560,7 +583,9 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     set.add(c.getString(0))
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getDeletedContactPhones: ${e.message}", e)
+        }
         return set
     }
 
@@ -573,7 +598,9 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     list.add(c.getString(0))
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error in getPendingDeletedContactIds: ${e.message}", e)
+        }
         return list
     }
 
@@ -581,20 +608,18 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
     fun markDeletedContactsSynced(ids: List<String>) {
         if (ids.isEmpty()) return
         val db = writableDatabase
-        db.beginTransaction()
         try {
-            for (chunk in ids.chunked(400)) {
-                val placeholders = chunk.joinToString(",") { "?" }
-                val cv = ContentValues().apply {
-                    put(COL_DC_IS_SYNCED, 1)
+            db.transaction {
+                for (chunk in ids.chunked(400)) {
+                    val placeholders = chunk.joinToString(",") { "?" }
+                    val cv = ContentValues().apply {
+                        put(COL_DC_IS_SYNCED, 1)
+                    }
+                    update(TABLE_DELETED_CONTACTS, cv, "$COL_DC_ID IN ($placeholders)", chunk.toTypedArray())
                 }
-                db.update(TABLE_DELETED_CONTACTS, cv, "$COL_DC_ID IN ($placeholders)", chunk.toTypedArray())
             }
-            db.setTransactionSuccessful()
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in markDeletedContactsSynced: ${e.message}", e)
-        } finally {
-            db.endTransaction()
+            Log.e("LocalDb", "Error in markDeletedContactsSynced: ${e.message}", e)
         }
     }
 
@@ -617,7 +642,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
             recordDeletedContact(contact.id, contact.phone, isSynced = false)
             return contact
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in deleteContact: ${e.message}", e)
+            Log.e("LocalDb", "Error in deleteContact: ${e.message}", e)
             return null
         }
     }
@@ -627,33 +652,31 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         if (ids.isEmpty()) return emptyList()
         val deleted = mutableListOf<ContactEntity>()
         val db = writableDatabase
-        db.beginTransaction()
         try {
-            for (chunk in ids.chunked(400)) {
-                val placeholders = chunk.joinToString(",") { "?" }
-                db.rawQuery("SELECT * FROM $TABLE_CONTACTS WHERE $COL_C_ID IN ($placeholders)", chunk.toTypedArray()).use { c ->
-                    while (c.moveToNext()) {
-                        deleted.add(cursorToContact(c))
+            db.transaction {
+                for (chunk in ids.chunked(400)) {
+                    val placeholders = chunk.joinToString(",") { "?" }
+                    rawQuery("SELECT * FROM $TABLE_CONTACTS WHERE $COL_C_ID IN ($placeholders)", chunk.toTypedArray()).use { c ->
+                        while (c.moveToNext()) {
+                            deleted.add(cursorToContact(c))
+                        }
+                    }
+                    if (soft) {
+                        val cv = ContentValues().apply {
+                            put(COL_C_DELETED, 1)
+                            put(COL_C_EDITED, 1)
+                            put(COL_C_SYNC_STATUS, "PENDING")
+                            put(COL_C_UPDATED_AT, System.currentTimeMillis())
+                        }
+                        update(TABLE_CONTACTS, cv, "$COL_C_ID IN ($placeholders)", chunk.toTypedArray())
+                    } else {
+                        delete(TABLE_CONTACTS, "$COL_C_ID IN ($placeholders)", chunk.toTypedArray())
                     }
                 }
-                if (soft) {
-                    val cv = ContentValues().apply {
-                        put(COL_C_DELETED, 1)
-                        put(COL_C_EDITED, 1)
-                        put(COL_C_SYNC_STATUS, "PENDING")
-                        put(COL_C_UPDATED_AT, System.currentTimeMillis())
-                    }
-                    db.update(TABLE_CONTACTS, cv, "$COL_C_ID IN ($placeholders)", chunk.toTypedArray())
-                } else {
-                    db.delete(TABLE_CONTACTS, "$COL_C_ID IN ($placeholders)", chunk.toTypedArray())
-                }
+                recordDeletedContacts(deleted, isSynced = false)
             }
-            recordDeletedContacts(deleted, isSynced = false)
-            db.setTransactionSuccessful()
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in deleteContacts: ${e.message}", e)
-        } finally {
-            db.endTransaction()
+            Log.e("LocalDb", "Error in deleteContacts: ${e.message}", e)
         }
         return deleted
     }
@@ -663,8 +686,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         if (ids.isEmpty()) return 0
         val db = writableDatabase
         var count = 0
-        db.beginTransaction()
-        try {
+        db.transaction {
             val cv = ContentValues().apply {
                 put(COL_C_SAVED, if (star) 1 else 0)
                 put(COL_C_EDITED, 1)
@@ -673,11 +695,8 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
             }
             for (chunk in ids.chunked(400)) {
                 val placeholders = chunk.joinToString(",") { "?" }
-                count += db.update(TABLE_CONTACTS, cv, "$COL_C_ID IN ($placeholders)", chunk.toTypedArray())
+                count += update(TABLE_CONTACTS, cv, "$COL_C_ID IN ($placeholders)", chunk.toTypedArray())
             }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
         }
         return count
     }
@@ -725,9 +744,8 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
             val toDelete = list.filter { it.id != survivor.id }
 
             val db = writableDatabase
-            db.beginTransaction()
-            try {
-                val now = System.currentTimeMillis()
+            val now = System.currentTimeMillis()
+            db.transaction {
                 val cv = ContentValues().apply {
                     put(COL_C_ID, survivor.id)
                     put(COL_C_NAME, survivor.name)
@@ -743,7 +761,7 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     put(COL_C_SYNC_STATUS, "PENDING")
                     put(COL_C_DEVICE_ID, survivor.deviceId)
                 }
-                db.insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
 
                 // Soft-delete duplicate contacts so pending sync will push their deletion to cloud!
                 for (del in toDelete) {
@@ -753,19 +771,15 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                         put(COL_C_SYNC_STATUS, "PENDING")
                         put(COL_C_UPDATED_AT, now)
                     }
-                    db.update(TABLE_CONTACTS, delCv, "$COL_C_ID = ?", arrayOf(del.id))
+                    update(TABLE_CONTACTS, delCv, "$COL_C_ID = ?", arrayOf(del.id))
                 }
 
                 // Record in blacklist tombstone table (blacklistPhone = false because survivor still has this phone!)
                 recordDeletedContacts(toDelete, isSynced = false, blacklistPhone = false)
-
-                db.setTransactionSuccessful()
-            } finally {
-                db.endTransaction()
             }
             return SmartMergeResult(survivor, toDelete, phone)
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in smartMergeGroup: ${e.message}", e)
+            Log.e("LocalDb", "Error in smartMergeGroup: ${e.message}", e)
             return null
         }
     }
@@ -776,53 +790,50 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         if (dupes.isEmpty()) return emptyList()
         val results = mutableListOf<SmartMergeResult>()
         val db = writableDatabase
-        db.beginTransaction()
         try {
             val now = System.currentTimeMillis()
-            for (g in dupes) {
-                if (g.contacts.size <= 1) continue
-                val list = g.contacts
-                val survivor = SmartMergeConfig.resolveSurvivor(list, g.phone, config)
-                val toDelete = list.filter { it.id != survivor.id }
+            db.transaction {
+                for (g in dupes) {
+                    if (g.contacts.size <= 1) continue
+                    val list = g.contacts
+                    val survivor = SmartMergeConfig.resolveSurvivor(list, g.phone, config)
+                    val toDelete = list.filter { it.id != survivor.id }
 
-                val cv = ContentValues().apply {
-                    put(COL_C_ID, survivor.id)
-                    put(COL_C_NAME, survivor.name)
-                    put(COL_C_PHONE, survivor.phone)
-                    put(COL_C_DETAILS, survivor.details)
-                    put(COL_C_SAVED, if (survivor.saved) 1 else 0)
-                    put(COL_C_EDITED, 1)
-                    put(COL_C_DELETED, 0)
-                    put(COL_C_CREATED_AT, survivor.createdAt)
-                    put(COL_C_UPDATED_AT, now)
-                    put(COL_C_SOURCE, survivor.source)
-                    put(COL_C_CLOUD_ID, survivor.cloudId)
-                    put(COL_C_SYNC_STATUS, "PENDING")
-                    put(COL_C_DEVICE_ID, survivor.deviceId)
-                }
-                db.insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
-
-                for (del in toDelete) {
-                    val delCv = ContentValues().apply {
-                        put(COL_C_DELETED, 1)
+                    val cv = ContentValues().apply {
+                        put(COL_C_ID, survivor.id)
+                        put(COL_C_NAME, survivor.name)
+                        put(COL_C_PHONE, survivor.phone)
+                        put(COL_C_DETAILS, survivor.details)
+                        put(COL_C_SAVED, if (survivor.saved) 1 else 0)
                         put(COL_C_EDITED, 1)
-                        put(COL_C_SYNC_STATUS, "PENDING")
+                        put(COL_C_DELETED, 0)
+                        put(COL_C_CREATED_AT, survivor.createdAt)
                         put(COL_C_UPDATED_AT, now)
+                        put(COL_C_SOURCE, survivor.source)
+                        put(COL_C_CLOUD_ID, survivor.cloudId)
+                        put(COL_C_SYNC_STATUS, "PENDING")
+                        put(COL_C_DEVICE_ID, survivor.deviceId)
                     }
-                    db.update(TABLE_CONTACTS, delCv, "$COL_C_ID = ?", arrayOf(del.id))
+                    insertWithOnConflict(TABLE_CONTACTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+
+                    for (del in toDelete) {
+                        val delCv = ContentValues().apply {
+                            put(COL_C_DELETED, 1)
+                            put(COL_C_EDITED, 1)
+                            put(COL_C_SYNC_STATUS, "PENDING")
+                            put(COL_C_UPDATED_AT, now)
+                        }
+                        update(TABLE_CONTACTS, delCv, "$COL_C_ID = ?", arrayOf(del.id))
+                    }
+
+                    results.add(SmartMergeResult(survivor, toDelete, g.phone))
                 }
 
-                results.add(SmartMergeResult(survivor, toDelete, g.phone))
+                val allDeleted = results.flatMap { it.deletedContacts }
+                recordDeletedContacts(allDeleted, isSynced = false, blacklistPhone = false)
             }
-
-            val allDeleted = results.flatMap { it.deletedContacts }
-            recordDeletedContacts(allDeleted, isSynced = false, blacklistPhone = false)
-
-            db.setTransactionSuccessful()
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in smartMergeAllGroups: ${e.message}", e)
-        } finally {
-            db.endTransaction()
+            Log.e("LocalDb", "Error in smartMergeAllGroups: ${e.message}", e)
         }
         return results
     }
@@ -884,9 +895,8 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
 
         val updatedList = mutableListOf<ContactEntity>()
         val db = writableDatabase
-        db.beginTransaction()
-        try {
-            val now = System.currentTimeMillis()
+        val now = System.currentTimeMillis()
+        db.transaction {
             contacts.forEachIndexed { index, contact ->
                 val newName = NameDisambiguator.disambiguateName(
                     rawName = contact.name,
@@ -906,15 +916,12 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                         put(COL_C_UPDATED_AT, now)
                         put(COL_C_SYNC_STATUS, "PENDING")
                     }
-                    db.update(TABLE_CONTACTS, cv, "$COL_C_ID = ?", arrayOf(contact.id))
+                    update(TABLE_CONTACTS, cv, "$COL_C_ID = ?", arrayOf(contact.id))
                     updatedList.add(updated)
                 } else {
                     updatedList.add(contact)
                 }
             }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
         }
         return updatedList
     }
@@ -927,9 +934,8 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         if (groups.isEmpty()) return emptyList()
         val allUpdated = mutableListOf<ContactEntity>()
         val db = writableDatabase
-        db.beginTransaction()
-        try {
-            val now = System.currentTimeMillis()
+        val now = System.currentTimeMillis()
+        db.transaction {
             for (targetGroup in groups) {
                 val contacts = targetGroup.contacts
                 contacts.forEachIndexed { index, contact ->
@@ -951,14 +957,11 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                             put(COL_C_UPDATED_AT, now)
                             put(COL_C_SYNC_STATUS, "PENDING")
                         }
-                        db.update(TABLE_CONTACTS, cv, "$COL_C_ID = ?", arrayOf(contact.id))
+                        update(TABLE_CONTACTS, cv, "$COL_C_ID = ?", arrayOf(contact.id))
                         allUpdated.add(updated)
                     }
                 }
             }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
         }
         return allUpdated
     }
@@ -1032,34 +1035,32 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
     fun insertSmsBatch(items: List<SmsRecordEntity>): Int {
         var count = 0
         val db = writableDatabase
-        db.beginTransaction()
         try {
-            for (item in items) {
-                val cv = ContentValues().apply {
-                    put(COL_S_ADDRESS, item.address)
-                    put(COL_S_NORMALIZED, item.normalizedNumber)
-                    put(COL_S_BODY, item.body)
-                    put(COL_S_DATE, item.date)
-                    put(COL_S_TYPE, item.type)
-                    put(COL_S_IS_SYNCED, if (item.isSynced) 1 else 0)
-                    put(COL_S_DEVICE_ID, item.deviceId)
-                    put(COL_S_DEVICE_SMS_ID, item.deviceSmsId)
-                    put(COL_S_CATEGORY, item.category)
-                    put(COL_S_SENDER_TYPE, item.senderType)
-                    if (item.extractedOtp != null) put(COL_S_OTP, item.extractedOtp)
-                    if (item.extractedAmount != null) put(COL_S_AMOUNT, item.extractedAmount)
-                    if (item.isDebit != null) put(COL_S_IS_DEBIT, if (item.isDebit) 1 else 0)
-                    if (item.syncedAt != null) put(COL_S_SYNCED_AT, item.syncedAt)
+            db.transaction {
+                for (item in items) {
+                    val cv = ContentValues().apply {
+                        put(COL_S_ADDRESS, item.address)
+                        put(COL_S_NORMALIZED, item.normalizedNumber)
+                        put(COL_S_BODY, item.body)
+                        put(COL_S_DATE, item.date)
+                        put(COL_S_TYPE, item.type)
+                        put(COL_S_IS_SYNCED, if (item.isSynced) 1 else 0)
+                        put(COL_S_DEVICE_ID, item.deviceId)
+                        put(COL_S_DEVICE_SMS_ID, item.deviceSmsId)
+                        put(COL_S_CATEGORY, item.category)
+                        put(COL_S_SENDER_TYPE, item.senderType)
+                        if (item.extractedOtp != null) put(COL_S_OTP, item.extractedOtp)
+                        if (item.extractedAmount != null) put(COL_S_AMOUNT, item.extractedAmount)
+                        if (item.isDebit != null) put(COL_S_IS_DEBIT, if (item.isDebit) 1 else 0)
+                        if (item.syncedAt != null) put(COL_S_SYNCED_AT, item.syncedAt)
+                    }
+                    val rowId = insertWithOnConflict(TABLE_SMS, null, cv, SQLiteDatabase.CONFLICT_IGNORE)
+                    if (rowId != -1L) count++
                 }
-                val rowId = db.insertWithOnConflict(TABLE_SMS, null, cv, SQLiteDatabase.CONFLICT_IGNORE)
-                if (rowId != -1L) count++
             }
-            db.setTransactionSuccessful()
             invalidateSmsStatsCache()
         } catch (e: Exception) {
-            android.util.Log.e("LocalDb", "Error in insertSmsBatch: ${e.message}", e)
-        } finally {
-            db.endTransaction()
+            Log.e("LocalDb", "Error in insertSmsBatch: ${e.message}", e)
         }
         return count
     }
@@ -1187,23 +1188,24 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
         var total = 0
         val deviceSmsIds = mutableListOf<Long>()
         val db = writableDatabase
-        db.beginTransaction()
-        try {
+        db.transaction {
             for (chunk in ids.chunked(500)) {
                 val placeholders = chunk.joinToString(",") { "?" }
                 val args = chunk.map { it.toString() }.toTypedArray()
 
                 // Collect device SMS IDs before removing local records
                 try {
-                    db.rawQuery("SELECT $COL_S_DEVICE_SMS_ID FROM $TABLE_SMS WHERE $COL_S_ID IN ($placeholders)", args).use { c ->
+                    rawQuery("SELECT $COL_S_DEVICE_SMS_ID FROM $TABLE_SMS WHERE $COL_S_ID IN ($placeholders)", args).use { c ->
                         while (c.moveToNext()) {
                             val devId = c.getLong(0)
                             if (devId > 0L) deviceSmsIds.add(devId)
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("LocalDb", "Error querying device SMS IDs for deletion: ${e.message}")
+                }
 
-                total += db.delete(TABLE_SMS, "$COL_S_ID IN ($placeholders)", args)
+                total += delete(TABLE_SMS, "$COL_S_ID IN ($placeholders)", args)
             }
 
             // Add to blacklist table so rescan NEVER re-imports these deleted device messages
@@ -1213,14 +1215,10 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     put(COL_D_SMS_ID, devId)
                     put(COL_D_DELETED_AT, now)
                 }
-                db.insertWithOnConflict(TABLE_DELETED_SMS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                insertWithOnConflict(TABLE_DELETED_SMS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
             }
-
-            db.setTransactionSuccessful()
-            invalidateSmsStatsCache()
-        } finally {
-            db.endTransaction()
         }
+        invalidateSmsStatsCache()
         return Pair(total, deviceSmsIds)
     }
 
@@ -1239,7 +1237,9 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
                     set.add(c.getLong(0))
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error reading deleted device SMS IDs: ${e.message}", e)
+        }
         return set
     }
 
@@ -1247,25 +1247,24 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
     fun cleanDuplicateSms(): Int {
         val db = writableDatabase
         var deleted = 0
-        db.beginTransaction()
         try {
-            val countBefore = android.database.DatabaseUtils.queryNumEntries(db, TABLE_SMS)
-            val sql = """
-                DELETE FROM $TABLE_SMS
-                WHERE $COL_S_ID NOT IN (
-                    SELECT MIN($COL_S_ID)
-                    FROM $TABLE_SMS
-                    GROUP BY $COL_S_ADDRESS, $COL_S_DATE, $COL_S_BODY
-                )
-            """.trimIndent()
-            db.execSQL(sql)
-            val countAfter = android.database.DatabaseUtils.queryNumEntries(db, TABLE_SMS)
-            deleted = (countBefore - countAfter).toInt().coerceAtLeast(0)
-            db.setTransactionSuccessful()
+            db.transaction {
+                val countBefore = android.database.DatabaseUtils.queryNumEntries(this, TABLE_SMS)
+                val sql = """
+                    DELETE FROM $TABLE_SMS
+                    WHERE $COL_S_ID NOT IN (
+                        SELECT MIN($COL_S_ID)
+                        FROM $TABLE_SMS
+                        GROUP BY $COL_S_ADDRESS, $COL_S_DATE, $COL_S_BODY
+                    )
+                """.trimIndent()
+                execSQL(sql)
+                val countAfter = android.database.DatabaseUtils.queryNumEntries(this, TABLE_SMS)
+                deleted = (countBefore - countAfter).toInt().coerceAtLeast(0)
+            }
             invalidateSmsStatsCache()
-        } catch (_: Exception) {
-        } finally {
-            db.endTransaction()
+        } catch (e: Exception) {
+            Log.e("LocalDb", "Error cleaning duplicate SMS: ${e.message}", e)
         }
         return deleted
     }
@@ -1293,14 +1292,17 @@ class LocalDb private constructor(context: Context) : SQLiteOpenHelper(context.a
     fun vacuumDatabase() {
         try {
             writableDatabase.execSQL("VACUUM")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w("LocalDb", "VACUUM deferred: ${e.message}")
+        }
     }
 
     fun getDatabaseSizeBytes(): Long {
         return try {
             val dbFile = appContext.getDatabasePath(DATABASE_NAME)
             if (dbFile.exists()) dbFile.length() else 0L
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("LocalDb", "Error getting database size: ${e.message}")
             0L
         }
     }

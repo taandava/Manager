@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.os.Build
 import android.provider.ContactsContract
+import android.util.Log
 import com.taandava.manager.data.ContactEntity
 import com.taandava.manager.data.LocalDb
 import com.taandava.manager.util.PhoneUtils
@@ -219,7 +220,9 @@ class ContactScanner(private val context: Context) {
             if (ops.size >= 150) {
                 try {
                     context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("ContactScanner", "Batch insert to device contacts failed: ${e.message}")
+                }
                 ops = ArrayList()
             }
         }
@@ -227,7 +230,9 @@ class ContactScanner(private val context: Context) {
         if (ops.isNotEmpty()) {
             try {
                 context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w("ContactScanner", "Final batch insert to device contacts failed: ${e.message}")
+            }
         }
 
         return savedCount
@@ -330,7 +335,9 @@ class ContactScanner(private val context: Context) {
                         if (ops.size >= 100) {
                             try {
                                 context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                            } catch (_: Exception) {}
+                            } catch (e: Exception) {
+                                Log.w("ContactScanner", "Batch delete device duplicates failed: ${e.message}")
+                            }
                             ops = ArrayList()
                         }
                     }
@@ -342,7 +349,9 @@ class ContactScanner(private val context: Context) {
             if (ops.isNotEmpty()) {
                 try {
                     context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("ContactScanner", "Final batch delete device duplicates failed: ${e.message}")
+                }
             }
 
             return deleted
@@ -392,14 +401,18 @@ class ContactScanner(private val context: Context) {
                 if (ops.size >= 100) {
                     try {
                         context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.w("ContactScanner", "Batch delete device contacts by phone failed: ${e.message}")
+                    }
                     ops = ArrayList()
                 }
             }
             if (ops.isNotEmpty()) {
                 try {
                     context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("ContactScanner", "Final batch delete device contacts by phone failed: ${e.message}")
+                }
             }
             return deleted
         } catch (e: Exception) {
@@ -460,7 +473,9 @@ class ContactScanner(private val context: Context) {
                 if (ops.size >= 100) {
                     try {
                         context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.w("ContactScanner", "Batch delete device duplicates for phone failed: ${e.message}")
+                    }
                     ops = ArrayList()
                 }
             }
@@ -468,7 +483,9 @@ class ContactScanner(private val context: Context) {
             if (ops.isNotEmpty()) {
                 try {
                     context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("ContactScanner", "Final batch delete device duplicates for phone failed: ${e.message}")
+                }
             }
             return deleted
         } catch (e: Exception) {

@@ -10,8 +10,10 @@ import android.util.Log
  * Required for Android Default SMS app eligibility.
  */
 class MmsReceiver : BroadcastReceiver() {
-    @Suppress("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
+        if ("android.provider.Telephony.WAP_PUSH_DELIVER" != intent.action) {
+            return
+        }
         try {
             Log.i("MmsReceiver", "Handled WAP_PUSH_DELIVER broadcast")
         } catch (e: Exception) {

@@ -33,8 +33,10 @@ class SmsReceiver : BroadcastReceiver() {
         const val CHANNEL_NAME = "Incoming Messages"
     }
 
-    @Suppress("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
+        if (Telephony.Sms.Intents.SMS_DELIVER_ACTION != intent.action) {
+            return
+        }
         try {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
             if (messages.isNullOrEmpty()) return
@@ -154,6 +156,17 @@ class SmsReceiver : BroadcastReceiver() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(
+                        context,
+                        android.Manifest.permission.POST_NOTIFICATIONS
+                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    Log.w("SmsReceiver", "POST_NOTIFICATIONS permission not granted, skipping notification")
+                    return
+                }
+            }
 
             nm.notify(System.currentTimeMillis().toInt(), builder.build())
         } catch (e: Exception) {
